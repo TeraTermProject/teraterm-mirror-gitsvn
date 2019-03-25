@@ -79,17 +79,27 @@ LRESULT CALLBACK password_wnd_proc(HWND control, UINT msg,
 			            (LPARAM) (TCHAR *) chars);
 
 			if (tipwin == NULL) {
-				TCHAR *s;
+				TCHAR uimsg[MAX_UIMSG];
 				RECT rect;
+				const TCHAR *s;
+				s = _T("制御文字が入力されました")
+					_T("\n")
+					_T("英語:")
+					_T("\n")
+					_T("control character is entered");
+				_tcscpy_s(uimsg, _countof(uimsg), s);
 				if (wParam == 'V' - 'A' + 1) {
-					s = _T("制御文字を入力しています")
+					// CTRL + V
+					s = _T("\n")
+						_T("Shift+Insertでクリップボードからペーストできます")
 						_T("\n")
-						_T("クリップボードからの貼り付けのショートカットはCTRL+Insertです");
-				} else {
-					s = _T("制御文字を入力しています");
+						_T("英語:")
+						_T("\n")
+						_T("Use Shift + Insert to paste from clipboard");
+						_tcscat_s(uimsg, _countof(uimsg), s);
 				}
 				GetWindowRect(control, &rect);
-				tipwin = TipWinCreate(control, rect.left, rect.bottom, s);
+				tipwin = TipWinCreate(control, rect.left, rect.bottom, uimsg);
 			}
 
 			return 0;

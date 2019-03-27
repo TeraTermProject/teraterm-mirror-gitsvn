@@ -16,10 +16,8 @@
 // âpåÍ (ïƒçë) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -48,7 +46,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,112,310,50,14
 END
 
-IDD_SSHAUTH DIALOGEX 0, 0, 331, 402
+IDD_SSHAUTH DIALOGEX 0, 0, 331, 415
 STYLE DS_SETFONT | DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "SSH Authentication"
 FONT 8, "Tahoma", 0, 0, 0x0
@@ -57,36 +55,37 @@ BEGIN
     LTEXT           "Authentication required.",IDC_SSHAUTHBANNER2,6,16,319,10
     LTEXT           "User &name:",IDC_SSHUSERNAMELABEL,17,31,57,8
     EDITTEXT        IDC_SSHUSERNAME,28,44,145,12,ES_AUTOHSCROLL
-    LTEXT           "&Passphrase:",IDC_SSHPASSWORDCAPTION,17,62,56,8
-    EDITTEXT        IDC_SSHPASSWORD,28,76,145,12,ES_PASSWORD | ES_AUTOHSCROLL
-    PUSHBUTTON      "Paste from &clipboard",IDC_FROM_CLIPBOARD,28,92,80,14
+    PUSHBUTTON      "Paste &Windows Username",IDC_FROM_GETUSERNAME,28,60,95,14
+    LTEXT           "&Passphrase:",IDC_SSHPASSWORDCAPTION,17,77,56,8
+    EDITTEXT        IDC_SSHPASSWORD,28,91,145,12,ES_PASSWORD | ES_AUTOHSCROLL
+    PUSHBUTTON      "Paste from &clipboard",IDC_FROM_CLIPBOARD,28,107,80,14
     CONTROL         "Cl&ear clipboard after paste",IDC_CLEAR_CLIPBOARD,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,40,110,132,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,40,125,132,10
     CONTROL         "Use control characters",IDC_USE_CONTROL_CHARACTER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,28,125,132,10
-    CONTROL         "&Show passphrase",IDC_SHOW_PASSPHRASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,28,140,132,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,28,140,132,10
+    CONTROL         "&Show passphrase",IDC_SHOW_PASSPHRASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,28,155,132,10
     CONTROL         "Remember password in &memory",IDC_REMEMBER_PASSWORD,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,157,132,10
-    CONTROL         "F&orward agent",IDC_FORWARD_AGENT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,173,132,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,172,132,10
+    CONTROL         "F&orward agent",IDC_FORWARD_AGENT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,188,132,10
     CONTROL         "Use p&lain password to log in",IDC_SSHUSEPASSWORD,
-                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,27,204,219,10
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,27,219,219,10
     CONTROL         "Use &RSA/DSA/ECDSA/ED25519 key to log in",IDC_SSHUSERSA,
-                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,27,222,152,10
-    CONTROL         "Use r&hosts to log in (SSH1)",IDC_SSHUSERHOSTS,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,27,272,99,10
+                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,27,237,152,10
+    CONTROL         "Use r&hosts to log in (SSH1)",IDC_SSHUSERHOSTS,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,27,287,99,10
     CONTROL         "Use SSH1:challenge/response(&TIS) / SSH2:keyboard-interactive to log in",IDC_SSHUSETIS,
-                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,27,341,260,10
-    CONTROL         "Use P&ageant to log in",IDC_SSHUSEPAGEANT,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,27,358,276,10
-    LTEXT           "Private &key file:",IDC_RSAFILENAMELABEL,38,238,91,8
-    EDITTEXT        IDC_RSAFILENAME,50,250,150,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_CHOOSERSAFILE,207,249,14,14,WS_GROUP
-    LTEXT           "Local &user name:",IDC_LOCALUSERNAMELABEL,38,284,91,8
-    EDITTEXT        IDC_LOCALUSERNAME,50,296,106,13,ES_AUTOHSCROLL
-    LTEXT           "Host private key &file:",IDC_HOSTRSAFILENAMELABEL,38,312,91,8
-    EDITTEXT        IDC_HOSTRSAFILENAME,50,326,151,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_CHOOSEHOSTRSAFILE,208,325,17,14
-    DEFPUSHBUTTON   "OK",IDOK,217,382,50,14,WS_GROUP
-    PUSHBUTTON      "&Disconnect",IDCANCEL,275,382,50,14
-    GROUPBOX        "authentication methods ",IDC_STATIC,17,191,300,185
+                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,27,356,260,10
+    CONTROL         "Use P&ageant to log in",IDC_SSHUSEPAGEANT,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,27,373,276,10
+    LTEXT           "Private &key file:",IDC_RSAFILENAMELABEL,38,253,91,8
+    EDITTEXT        IDC_RSAFILENAME,50,265,150,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSERSAFILE,207,264,14,14,WS_GROUP
+    LTEXT           "Local &user name:",IDC_LOCALUSERNAMELABEL,38,299,91,8
+    EDITTEXT        IDC_LOCALUSERNAME,50,311,106,13,ES_AUTOHSCROLL
+    LTEXT           "Host private key &file:",IDC_HOSTRSAFILENAMELABEL,38,327,91,8
+    EDITTEXT        IDC_HOSTRSAFILENAME,50,341,151,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSEHOSTRSAFILE,208,340,17,14
+    DEFPUSHBUTTON   "OK",IDOK,217,395,50,14,WS_GROUP
+    PUSHBUTTON      "&Disconnect",IDCANCEL,275,395,50,14
+    GROUPBOX        "Authentication methods ",IDC_STATIC,17,206,300,185
 END
 
 IDD_HOSTDLG DIALOGEX 20, 20, 240, 128
@@ -628,8 +627,22 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_SECURETT            ICON                    "ttsecure.ico"
+
 IDI_SECURETT_GREEN      ICON                    "ttsecure_green.ico"
+
 IDI_SECURETT_YELLOW     ICON                    "ttsecure_yellow.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_SSHAUTH AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
 #endif    // âpåÍ (ïƒçë) resources
 /////////////////////////////////////////////////////////////////////////////
 

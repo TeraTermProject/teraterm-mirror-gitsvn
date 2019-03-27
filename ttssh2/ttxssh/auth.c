@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <Lmcons.h>		// for UNLEN
 
 #include "resource.h"
 #include "keyfiles.h"
@@ -66,12 +67,17 @@ static int auth_types_to_control_IDs[] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, IDC_SSHUSEPAGEANT, -1
 };
 static TipWin *tipwin;
+static BOOL UseControlChar = TRUE;
 
 LRESULT CALLBACK password_wnd_proc(HWND control, UINT msg,
                                    WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
 	case WM_CHAR:
+		if (!UseControlChar) {
+			// 制御文字は使用しない
+			break;
+		}
 		if ((GetKeyState(VK_CONTROL) & 0x8000) != 0) {
 			TCHAR chars[] = { (TCHAR) wParam, 0 };
 
@@ -807,6 +813,9 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		else {
 			DlgAuthFont = NULL;
 		}
+		UseControlChar = TRUE;
+		CheckDlgButton(dlg, IDC_USE_CONTROL_CHARACTER, UseControlChar ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(dlg, IDC_CLEAR_CLIPBOARD, BST_UNCHECKED);
 
 		// SSH2 autologinが有効の場合は、タイマを仕掛ける。 (2004.12.1 yutaka)
 		if (pvar->ssh2_autologin == 1) {
@@ -1013,16 +1022,64 @@ canceled:
 			return TRUE;
 
 		case IDC_FROM_CLIPBOARD: {
-			char *clipboard = GetClipboardTextA(dlg, TRUE);
+			char *clipboard = GetClipboardTextA(dlg, IsDlgButtonChecked(dlg, IDC_CLEAR_CLIPBOARD) != BST_UNCHECKED);
 			if (clipboard != NULL) {
 				SetDlgItemTextA(dlg, IDC_SSHPASSWORD, clipboard);
 				free(clipboard);
-				SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDOK), TRUE);
+				SendDlgItemMessage(dlg, IDC_SSHPASSWORD, EM_SETSEL, 0, -1);
+				SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDC_SSHPASSWORD), TRUE);
 				return FALSE;
 			}
 			return TRUE;
 		}
 
+		case IDC_SHOW_PASSPHRASE: {
+			// 伏せ字 on/off を切り替える
+			HWND hWnd = GetDlgItem(dlg, IDC_SSHPASSWORD);
+			static wchar_t password_char;
+			if (password_char == 0) {
+				wchar_t c = (wchar_t)SendMessage(hWnd, EM_GETPASSWORDCHAR, 0, 0);
+				password_char = c;
+			}
+			if (IsDlgButtonChecked(dlg, IDC_SHOW_PASSPHRASE) != BST_UNCHECKED) {
+				SendMessage(hWnd, EM_SETPASSWORDCHAR, 0, 0);
+			} else {
+#if !defined(UNICODE)
+				if (password_char < 0x100) {
+					SendMessageA(hWnd, EM_SETPASSWORDCHAR, (WPARAM)password_char, 0);
+				} else {
+					// TODO W系直呼び ↓うまくいかない
+					//SendMessageW(hWnd, EM_SETPASSWORDCHAR, (WPARAM)password_char, 0);
+					SendMessageA(hWnd, EM_SETPASSWORDCHAR, (WPARAM)'*', 0);
+				}
+#else
+				SendMessageW(hWnd, EM_SETPASSWORDCHAR, (WPARAM)password_char, 0);
+#endif
+			}
+			//InvalidateRect(hWnd, NULL, TRUE);
+			SendDlgItemMessage(dlg, IDC_SSHPASSWORD, EM_SETSEL, 0, -1);
+			SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDC_SSHPASSWORD), TRUE);
+			return TRUE;
+		}
+
+		case IDC_FROM_GETUSERNAME: {
+			TCHAR user_name[UNLEN+1];
+			DWORD len = _countof(user_name);
+			BOOL r = GetUserName(user_name, &len);
+			if (r != 0) {
+				SetDlgItemText(dlg, IDC_SSHUSERNAME, user_name);
+				SendDlgItemMessage(dlg, IDC_SSHUSERNAME, EM_SETSEL, 0, -1);
+				SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDC_SSHUSERNAME), TRUE);
+			}
+			return TRUE;
+		}
+
+		case IDC_USE_CONTROL_CHARACTER: {
+			UseControlChar =
+				(IsDlgButtonChecked(dlg, IDC_USE_CONTROL_CHARACTER) != BST_UNCHECKED) ?
+				TRUE : FALSE;
+			break;
+		}
 		default:
 			return FALSE;
 		}

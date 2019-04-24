@@ -36,7 +36,6 @@
 #define IDC_SSHUSERNAME                 1000
 #define IDC_HOSTTELNET                  1000
 #define IDC_HOSTSSH                     1001
-#define IDC_SSHUSERNAME2                1001
 #define IDC_SSHPASSWORD                 1002
 #define IDC_HOSTOTHER                   1002
 #define IDC_SSHAUTHBANNER               1003
@@ -200,13 +199,10 @@
 #define IDC_SSHUSEPAGEANT               1205
 #define IDC_SSHUSETIS2                  1206
 #define IDC_REMEMBERPASSWORD            1207
-#define IDC_SSHUSERSA2                  1207
 #define IDC_SENDFILE_TO                 1208
 #define IDC_SFTP_CONSOLE                1208
 #define IDC_REMOVEKEY_EDIT              1208
-#define IDC_SSHUSERSA3                  1208
 #define IDC_PUTTY_VERSION               1209
-#define IDC_SSHUSERSA4                  1209
 #define IDC_ED25519_TYPE                1211
 #define IDC_HOSTKEY_ROTATION_STATIC     1212
 #define IDC_LIST1                       1213
@@ -234,8 +230,12 @@
 #define IDC_USE_CONTROL_CHARACTER       1234
 #define IDC_HOSTRSAFILENAMELABEL        1235
 #define IDC_RSAFILENAMELABEL            1236
-#define IDC_FROM_GETUSERNAME            1237
-#define IDC_RSAFILENAMELABEL2           1237
+#define IDC_SSH_NO_USERNAME             1237
+#define IDC_SSH_DEFAULTUSERNAME         1238
+#define IDC_SSH_WINDOWS_USERNAME        1239
+#define IDC_FROM_GETUSERNAME            1240
+#define IDC_RSAFILENAMELABEL2           1241
+#define IDC_SSH_WINDOWS_USERNAME_TEXT   1241
 
 // Next default values for new objects
 // 
@@ -243,7 +243,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        118
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1237
+#define _APS_NEXT_CONTROL_VALUE         1242
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

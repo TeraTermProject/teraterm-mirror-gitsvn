@@ -244,9 +244,31 @@ static void update_server_supported_types(PTInstVar pvar, HWND dlg)
 
 static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 {
+	const static DlgTextInfo text_info[] = {
+		{ 0, "DLG_AUTH_TITLE" },
+		{ IDC_SSHAUTHBANNER, "DLG_AUTH_BANNER" },
+		{ IDC_SSHAUTHBANNER2, "DLG_AUTH_BANNER2" },
+		{ IDC_SSHUSERNAMELABEL, "DLG_AUTH_USERNAME" },
+		{ IDC_SSHPASSWORDCAPTION, "DLG_AUTH_PASSWORD" },
+		{ IDC_REMEMBER_PASSWORD, "DLG_AUTH_REMEMBER_PASSWORD" },
+		{ IDC_FORWARD_AGENT, "DLG_AUTH_FWDAGENT" },
+		{ IDC_SSHUSEPASSWORD, "DLG_AUTH_METHOD_PASSWORD" },
+		{ IDC_SSHUSERSA, "DLG_AUTH_METHOD_RSA" },
+		{ IDC_SSHUSERHOSTS, "DLG_AUTH_METHOD_RHOST" },
+		{ IDC_SSHUSEPAGEANT, "DLG_AUTH_METHOD_PAGEANT" },
+		//{ IDC_CHOOSERSAFILE, "DLG_AUTH_PRIVATEKEY" },
+		{ IDC_RSAFILENAMELABEL, "DLG_AUTH_PRIVATEKEY" },
+		{ IDC_LOCALUSERNAMELABEL, "DLG_AUTH_LOCALUSER" },
+		//{ IDC_CHOOSEHOSTRSAFILE, "DLG_AUTH_HOST_PRIVATEKEY" },
+		{ IDC_HOSTRSAFILENAMELABEL, "DLG_AUTH_HOST_PRIVATEKEY" },
+		{ IDOK, "BTN_OK" },
+		{ IDCANCEL, "BTN_DISCONNECT" },
+	};
 	int default_method = pvar->session_settings.DefaultAuthMethod;
-	char uimsg[MAX_UIMSG];
 
+	SetI18DlgStrs("TTSSH", dlg, text_info, _countof(text_info), pvar->ts->UILanguageFile);
+#if 0
+	char uimsg[MAX_UIMSG];
 	GetWindowText(dlg, uimsg, sizeof(uimsg));
 	UTIL_get_lang_msg("DLG_AUTH_TITLE", pvar, uimsg);
 	SetWindowText(dlg, pvar->ts->UIMsg);
@@ -295,6 +317,7 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 	GetDlgItemText(dlg, IDCANCEL, uimsg, sizeof(uimsg));
 	UTIL_get_lang_msg("BTN_DISCONNECT", pvar, uimsg);
 	SetDlgItemText(dlg, IDCANCEL, pvar->ts->UIMsg);
+#endif
 
 	init_auth_machine_banner(pvar, dlg);
 	init_password_control(pvar, dlg, IDC_SSHPASSWORD);
@@ -333,18 +356,45 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 	if (pvar->auth_state.user != NULL) {
 		SetDlgItemText(dlg, IDC_SSHUSERNAME, pvar->auth_state.user);
 		EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAME), FALSE);
+		EnableWindow(GetDlgItem(dlg, IDC_FROM_GETUSERNAME), FALSE);
 		EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAMELABEL), FALSE);
 	}
 	else if (strlen(pvar->ssh2_username) > 0) {
 		SetDlgItemText(dlg, IDC_SSHUSERNAME, pvar->ssh2_username);
 		if (pvar->ssh2_autologin == 1) {
 			EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAME), FALSE);
+			EnableWindow(GetDlgItem(dlg, IDC_FROM_GETUSERNAME), FALSE);
 			EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAMELABEL), FALSE);
 		}
 	}
-	else if (pvar->session_settings.DefaultUserName[0] != 0) {
-		SetDlgItemText(dlg, IDC_SSHUSERNAME,
-		               pvar->session_settings.DefaultUserName);
+	else {
+		switch(pvar->session_settings.DefaultUserType) {
+		case 0:
+			// 入力しない
+			break;
+		case 1:
+			// use DefaultUserName
+			if (pvar->session_settings.DefaultUserName[0] == 0) {
+				// 「入力しない」にしておく
+				pvar->session_settings.DefaultUserType = 0;
+			} else {
+				SetDlgItemText(dlg, IDC_SSHUSERNAME,
+							   pvar->session_settings.DefaultUserName);
+			}
+			break;
+		case 2: {
+			TCHAR user_name[UNLEN+1];
+			DWORD len = _countof(user_name);
+			BOOL r = GetUserName(user_name, &len);
+			if (r != 0) {
+				SetDlgItemText(dlg, IDC_SSHUSERNAME, user_name);
+			}
+			break;
+		}
+		default:
+			// 入力しないにしておく
+			pvar->session_settings.DefaultUserType = 0;
+		}
 	}
 
 	if (strlen(pvar->ssh2_password) > 0) {
@@ -838,7 +888,7 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 #endif
 		UseControlChar = TRUE;
 		CheckDlgButton(dlg, IDC_USE_CONTROL_CHARACTER, UseControlChar ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(dlg, IDC_CLEAR_CLIPBOARD, BST_UNCHECKED);
+		CheckDlgButton(dlg, IDC_CLEAR_CLIPBOARD, BST_CHECKED);
 
 		// SSH2 autologinが有効の場合は、タイマを仕掛ける。 (2004.12.1 yutaka)
 		if (pvar->ssh2_autologin == 1) {
@@ -922,6 +972,7 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 
 					// ユーザ名を変更させない
 					EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAME), FALSE);
+					EnableWindow(GetDlgItem(dlg, IDC_FROM_GETUSERNAME), FALSE);
 
 					// 認証メソッド none を送る
 					do_SSH2_userauth(pvar);
@@ -1015,6 +1066,7 @@ canceled:
 
 					// ユーザ名を変更させない
 					EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAME), FALSE);
+					EnableWindow(GetDlgItem(dlg, IDC_FROM_GETUSERNAME), FALSE);
 
 					// 認証メソッド none を送る
 					do_SSH2_userauth(pvar);
@@ -1415,6 +1467,33 @@ void AUTH_do_cred_dialog(PTInstVar pvar)
 
 static void init_default_auth_dlg(PTInstVar pvar, HWND dlg)
 {
+	int id;
+	TCHAR user_name[UNLEN+1];
+	DWORD len;
+	TCHAR uimsg[MAX_UIMSG];
+	TCHAR uimsg2[MAX_UIMSG];
+	const static DlgTextInfo text_info[] = {
+		{ 0, "DLG_AUTHSETUP_TITLE" },
+		{ IDC_SSHAUTHBANNER, "DLG_AUTHSETUP_BANNER" },
+//		{ IDC_SSHUSERNAMELABEL, "DLG_AUTHSETUP_USERNAME" },
+		{ IDC_SSH_DEFAULTUSERNAME, "DLG_AUTHSETUP_USERNAME" },
+		{ IDC_SSHUSEPASSWORD, "DLG_AUTHSETUP_METHOD_PASSWORD" },
+		{ IDC_SSHUSERSA, "DLG_AUTHSETUP_METHOD_RSA" },
+		{ IDC_SSHUSERHOSTS, "DLG_AUTHSETUP_METHOD_RHOST" },
+		{ IDC_SSHUSETIS, "DLG_AUTHSETUP_METHOD_CHALLENGE" },
+		{ IDC_SSHUSEPAGEANT, "DLG_AUTHSETUP_METHOD_PAGEANT" },
+		//{ IDC_CHOOSERSAFILE, "DLG_AUTH_PRIVATEKEY" },
+		{ IDC_RSAFILENAMELABEL, "DLG_AUTH_PRIVATEKEY" },
+		{ IDC_LOCALUSERNAMELABEL, "DLG_AUTH_LOCALUSER" },
+		//{ IDC_CHOOSEHOSTRSAFILE, "DLG_AUTH_HOST_PRIVATEKEY" },
+		{ IDC_HOSTRSAFILENAMELABEL, "DLG_AUTH_HOST_PRIVATEKEY" },
+		{ IDC_CHECKAUTH, "DLG_AUTHSETUP_CHECKAUTH" },
+		{ IDOK, "BTN_OK" },
+		{ IDCANCEL, "BTN_CANCEL" },
+	};
+
+	SetI18DlgStrs("TTSSH", dlg, text_info, _countof(text_info), pvar->ts->UILanguageFile);
+#if 0
 	char uimsg[MAX_UIMSG];
 
 	GetWindowText(dlg, uimsg, sizeof(uimsg));
@@ -1459,6 +1538,7 @@ static void init_default_auth_dlg(PTInstVar pvar, HWND dlg)
 	GetDlgItemText(dlg, IDCANCEL, uimsg, sizeof(uimsg));
 	UTIL_get_lang_msg("BTN_CANCEL", pvar, uimsg);
 	SetDlgItemText(dlg, IDCANCEL, pvar->ts->UIMsg);
+#endif
 
 	switch (pvar->settings.DefaultAuthMethod) {
 	case SSH_AUTH_RSA:
@@ -1495,6 +1575,18 @@ static void init_default_auth_dlg(PTInstVar pvar, HWND dlg)
 	if (pvar->settings.CheckAuthListFirst) {
 		CheckDlgButton(dlg, IDC_CHECKAUTH, TRUE);
 	}
+
+	id = pvar->settings.DefaultUserType == 1 ? IDC_SSH_DEFAULTUSERNAME :
+		pvar->settings.DefaultUserType == 2 ? IDC_SSH_WINDOWS_USERNAME :
+		IDC_SSH_NO_USERNAME;
+	CheckRadioButton(dlg, IDC_SSH_NO_USERNAME, IDC_SSH_WINDOWS_USERNAME, id);
+
+	len = _countof(user_name);
+	GetUserName(user_name, &len);
+
+	GetDlgItemText(dlg, IDC_SSH_WINDOWS_USERNAME_TEXT, uimsg, _countof(uimsg));
+	_stprintf_s(uimsg2, _countof(uimsg2), uimsg, user_name);
+	SetDlgItemText(dlg, IDC_SSH_WINDOWS_USERNAME_TEXT, uimsg2);
 }
 
 static BOOL end_default_auth_dlg(PTInstVar pvar, HWND dlg)
@@ -1526,6 +1618,9 @@ static BOOL end_default_auth_dlg(PTInstVar pvar, HWND dlg)
 	GetDlgItemText(dlg, IDC_LOCALUSERNAME,
 	               pvar->settings.DefaultRhostsLocalUserName,
 	               sizeof(pvar->settings.DefaultRhostsLocalUserName));
+	pvar->settings.DefaultUserType =
+		IsDlgButtonChecked(dlg, IDC_SSH_DEFAULTUSERNAME) ? 1 :
+		IsDlgButtonChecked(dlg, IDC_SSH_WINDOWS_USERNAME) ? 2 : 0;
 
 	if (IsDlgButtonChecked(dlg, IDC_CHECKAUTH)) {
 		pvar->settings.CheckAuthListFirst = TRUE;

@@ -255,17 +255,20 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 		{ IDC_SSHAUTHBANNER, "DLG_AUTH_BANNER" },
 		{ IDC_SSHAUTHBANNER2, "DLG_AUTH_BANNER2" },
 		{ IDC_SSHUSERNAMELABEL, "DLG_AUTH_USERNAME" },
+		{ IDC_FROM_GETUSERNAME, "DLG_AUTH_PASTE_WINDOWS_USERNAME" },
 		{ IDC_SSHPASSWORDCAPTION, "DLG_AUTH_PASSWORD" },
+		{ IDC_FROM_CLIPBOARD, "DLG_AUTH_PASTE_CLIPBOARD" },
+		{ IDC_CLEAR_CLIPBOARD, "DLG_AUTH_CLEAR_CLIPBOARD" },
+		{ IDC_USE_CONTROL_CHARACTER, "DLG_AUTH_USE_CONTORL_CHARACTERS" },
+		{ IDC_SHOW_PASSPHRASE, "DLG_AUTH_SHOW_PASSPHRASE" },
 		{ IDC_REMEMBER_PASSWORD, "DLG_AUTH_REMEMBER_PASSWORD" },
 		{ IDC_FORWARD_AGENT, "DLG_AUTH_FWDAGENT" },
 		{ IDC_SSHUSEPASSWORD, "DLG_AUTH_METHOD_PASSWORD" },
 		{ IDC_SSHUSERSA, "DLG_AUTH_METHOD_RSA" },
 		{ IDC_SSHUSERHOSTS, "DLG_AUTH_METHOD_RHOST" },
 		{ IDC_SSHUSEPAGEANT, "DLG_AUTH_METHOD_PAGEANT" },
-		//{ IDC_CHOOSERSAFILE, "DLG_AUTH_PRIVATEKEY" },
 		{ IDC_RSAFILENAMELABEL, "DLG_AUTH_PRIVATEKEY" },
 		{ IDC_LOCALUSERNAMELABEL, "DLG_AUTH_LOCALUSER" },
-		//{ IDC_CHOOSEHOSTRSAFILE, "DLG_AUTH_HOST_PRIVATEKEY" },
 		{ IDC_HOSTRSAFILENAMELABEL, "DLG_AUTH_HOST_PRIVATEKEY" },
 		{ IDOK, "BTN_OK" },
 		{ IDCANCEL, "BTN_DISCONNECT" },
@@ -273,57 +276,6 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 	int default_method = pvar->session_settings.DefaultAuthMethod;
 
 	SetI18DlgStrs("TTSSH", dlg, text_info, _countof(text_info), pvar->ts->UILanguageFile);
-#if 0
-	char uimsg[MAX_UIMSG];
-	GetWindowText(dlg, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_TITLE", pvar, uimsg);
-	SetWindowText(dlg, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHAUTHBANNER, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_BANNER", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHAUTHBANNER, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHAUTHBANNER2, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_BANNER2", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHAUTHBANNER2, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSERNAMELABEL, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_USERNAME", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSERNAMELABEL, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHPASSWORDCAPTION, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_PASSWORD", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHPASSWORDCAPTION, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_REMEMBER_PASSWORD, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_REMEMBER_PASSWORD", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_REMEMBER_PASSWORD, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_FORWARD_AGENT, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_FWDAGENT", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_FORWARD_AGENT, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSEPASSWORD, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_METHOD_PASSWORD", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSEPASSWORD, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSERSA, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_METHOD_RSA", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSERSA, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSERHOSTS, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_METHOD_RHOST", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSERHOSTS, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSEPAGEANT, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_METHOD_PAGEANT", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSEPAGEANT, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_CHOOSERSAFILE, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_PRIVATEKEY", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_CHOOSERSAFILE, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_LOCALUSERNAMELABEL, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_LOCALUSER", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_LOCALUSERNAMELABEL, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_CHOOSEHOSTRSAFILE, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_HOST_PRIVATEKEY", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_CHOOSEHOSTRSAFILE, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDOK, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("BTN_OK", pvar, uimsg);
-	SetDlgItemText(dlg, IDOK, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDCANCEL, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("BTN_DISCONNECT", pvar, uimsg);
-	SetDlgItemText(dlg, IDCANCEL, pvar->ts->UIMsg);
-#endif
 
 	init_auth_machine_banner(pvar, dlg);
 	init_password_control(pvar, dlg, IDC_SSHPASSWORD);

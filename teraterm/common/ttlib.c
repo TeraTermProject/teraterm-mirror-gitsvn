@@ -28,18 +28,21 @@
  */
 
 /* misc. routines  */
-#include "teraterm.h"
+
 #include <sys/stat.h>
 #include <sys/utime.h>
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
-#include "tttypes.h"
 #include <shlobj.h>
 #include <ctype.h>
+#include <mbctype.h>	// for _ismbblead
+#include <assert.h>
 
-// for _ismbblead
-#include <mbctype.h>
+#include "teraterm_conf.h"
+#include "teraterm.h"
+#include "tttypes.h"
+#include "compat_win.h"
 
 /* OS version with GetVersionEx(*1)
 
@@ -1435,17 +1438,10 @@ BOOL HasBalloonTipSupport()
 // OPENFILENAMEA.lStructSize に代入する値
 DWORD get_OPENFILENAME_SIZE()
 {
-#if (_WIN32_WINNT >= 0x0500)
-#if !defined(OPENFILENAME_SIZE_VERSION_400A)
-#define OPENFILENAME_SIZE_VERSION_400A 76
-#endif
 	if (IsWindows2000OrLater()) {
 		return sizeof(OPENFILENAMEA);
 	}
 	return OPENFILENAME_SIZE_VERSION_400A;
-#else
-	return sizeof(OPENFILENAMEA);
-#endif
 }
 
 // convert table for KanjiCodeID and ListID
@@ -1804,4 +1800,85 @@ void SetDlgTexts(HWND hDlgWnd, const DlgTextInfo *infos, int infoCount, const ch
 void SetDlgMenuTexts(HMENU hMenu, const DlgTextInfo *infos, int infoCount, const char *UILanguageFile)
 {
 	SetI18MenuStrs("Tera Term", hMenu, infos, infoCount, UILanguageFile);
+}
+
+/**
+ *	ダイアログフォントを取得する
+ *	エラーは発生しない
+ */
+void GetMessageboxFont(LOGFONT *logfont)
+{
+	NONCLIENTMETRICS nci;
+	const int st_size = CCSIZEOF_STRUCT(NONCLIENTMETRICS, lfMessageFont);
+	BOOL r;
+
+	memset(&nci, 0, sizeof(nci));
+	nci.cbSize = st_size;
+	r = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, st_size, &nci, 0);
+	assert(r == TRUE);
+	*logfont = nci.lfStatusFont;
+}
+
+/**
+ *	ウィンドウ表示されているディスプレイのデスクトップの範囲を取得する
+ *	@param[in]		hWnd	ウィンドウのハンドル
+ *	@param[out]		rect	デスクトップ
+ */
+void GetDesktopRect(HWND hWnd, RECT *rect)
+{
+	if (HasMultiMonitorSupport()) {
+		// マルチモニタがサポートされている場合
+		MONITORINFO monitorInfo;
+		HMONITOR hMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+		monitorInfo.cbSize = sizeof(MONITORINFO);
+		GetMonitorInfo(hMonitor, &monitorInfo);
+		*rect = monitorInfo.rcWork;
+	} else {
+		// マルチモニタがサポートされていない場合
+		SystemParametersInfo(SPI_GETWORKAREA, 0, rect, 0);
+	}
+}
+
+/**
+ *	指定ウィンドウの中央にウィンドウを配置する
+ *	@param[in]	hWnd		位置を調整するウィンドウ
+ *	@param[in]	hWndParent	このウィンドウの中央に移動する
+ */
+void CenterWindow(HWND hWnd, HWND hWndParent)
+{
+	RECT rcWnd;
+	LONG WndWidth;
+	LONG WndHeight;
+	RECT rcParent;
+	int NewX;
+	int NewY;
+	RECT rcDesktop;
+	BOOL r;
+
+	r = GetWindowRect(hWnd, &rcWnd);
+	assert(r != FALSE); (void)r;
+	WndWidth = rcWnd.right - rcWnd.left;
+	WndHeight = rcWnd.bottom - rcWnd.top;
+	r = GetWindowRect(hWndParent, &rcParent);
+	assert(r != FALSE); (void)r;
+
+	// 新しい位置
+	NewX = (rcParent.left + rcParent.right) / 2 - WndWidth / 2;
+	NewY = (rcParent.top + rcParent.bottom) / 2 - WndHeight / 2;
+
+	// デスクトップからはみ出す場合、調整する
+	GetDesktopRect(hWndParent, &rcDesktop);
+	if (NewX + WndWidth > rcDesktop.right)
+		NewX = rcDesktop.right - WndWidth;
+	if (NewX < rcDesktop.left)
+		NewX = rcDesktop.left;
+
+	if (NewY + WndHeight > rcDesktop.bottom)
+		NewY = rcDesktop.bottom - WndHeight;
+	if (NewY < rcDesktop.top)
+		NewY = rcDesktop.top;
+
+	// 移動する
+	SetWindowPos(hWnd, NULL, NewX, NewY, 0, 0,
+				 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }

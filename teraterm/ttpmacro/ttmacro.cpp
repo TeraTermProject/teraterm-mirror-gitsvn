@@ -29,90 +29,60 @@
 
 /* TTMACRO.EXE, main */
 
-#include "stdafx.h"
+#include <stdio.h>
+#include <crtdbg.h>
+#include <windows.h>
+#include <commctrl.h>
+
 #include "teraterm.h"
+#include "compat_w95.h"
+#include "compat_win.h"
+#include "ttmdlg.h"
+#include "tmfc.h"
+#include "dlglib.h"
+#include "dllutil.h"
+
 #include "ttm_res.h"
 #include "ttmmain.h"
 #include "ttl.h"
-
 #include "ttmacro.h"
 #include "ttmlib.h"
 #include "ttlib.h"
 
-#include "compat_w95.h"
-
 #ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
+#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
 
 char UILanguageFile[MAX_PATH];
+static HWND CtrlWnd;
+static HINSTANCE hInst;
 
-/////////////////////////////////////////////////////////////////////////////
+static BOOL Busy;
+static CCtrlWindow *pCCtrlWindow;
 
-BEGIN_MESSAGE_MAP(CCtrlApp, CWinApp)
-	//{{AFX_MSG_MAP(CCtrlApp)
-	//}}AFX_MSG
-END_MESSAGE_MAP()
-
-/////////////////////////////////////////////////////////////////////////////
-
-CCtrlApp::CCtrlApp()
+HINSTANCE GetInstance()
 {
-	typedef BOOL (WINAPI *pSetDllDir)(LPCSTR);
-	typedef BOOL (WINAPI *pSetDefDllDir)(DWORD);
-
-	HMODULE module;
-	pSetDllDir setDllDir;
-	pSetDefDllDir setDefDllDir;
-
-	if ((module = GetModuleHandle("kernel32.dll")) != NULL) {
-		if ((setDefDllDir = (pSetDefDllDir)GetProcAddress(module, "SetDefaultDllDirectories")) != NULL) {
-			// SetDefaultDllDirectories() が使える場合は、検索パスを %WINDOWS%\system32 のみに設定する
-			(*setDefDllDir)((DWORD)0x00000800); // LOAD_LIBRARY_SEARCH_SYSTEM32
-		}
-		else if ((setDllDir = (pSetDllDir)GetProcAddress(module, "SetDllDirectoryA")) != NULL) {
-			// SetDefaultDllDirectories() が使えなくても、SetDllDirectory() が使える場合は
-			// カレントディレクトリだけでも検索パスからはずしておく。
-			(*setDllDir)("");
-		}
-	}
+	return hInst;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-CCtrlApp theApp;
-
-/////////////////////////////////////////////////////////////////////////////
-
-
-
-BOOL CCtrlApp::InitInstance()
+HWND GetHWND()
 {
-	static HMODULE HTTSET = NULL;
-
-	GetUILanguageFile(UILanguageFile, sizeof(UILanguageFile));
-
-	Busy = TRUE;
-	m_pMainWnd = new CCtrlWindow();
-	PCtrlWindow(m_pMainWnd)->Create();
-	Busy = FALSE;  
-	return TRUE;
+	return CtrlWnd;
 }
 
-int CCtrlApp::ExitInstance()
+static void init()
 {
-	//delete m_pMainWnd;
-	if (m_pMainWnd) {
-		m_pMainWnd->DestroyWindow();
+	DLLInit();
+	WinCompatInit();
+	if (pSetThreadDpiAwarenessContext) {
+		pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	}
-	m_pMainWnd = NULL;
-	return ExitCode;
+	// messageboxのフォントに設定する
+	SetDialogFont(NULL, NULL, NULL, NULL);
 }
 
 // TTMACRO main engine
-BOOL CCtrlApp::OnIdle(LONG lCount)
+static BOOL OnIdle(LONG lCount)
 {
 	BOOL Continue;
 
@@ -121,12 +91,77 @@ BOOL CCtrlApp::OnIdle(LONG lCount)
 		return FALSE;
 	}
 	Busy = TRUE;
-	if (m_pMainWnd != NULL) {
-		Continue = PCtrlWindow(m_pMainWnd)->OnIdle();
+	if (pCCtrlWindow != NULL) {
+		Continue = pCCtrlWindow->OnIdle();
 	}
 	else {
 		Continue = FALSE;
 	}
 	Busy = FALSE;
 	return Continue;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+// CCtrlApp theApp;
+
+/////////////////////////////////////////////////////////////////////////////
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInst,
+                   LPSTR lpszCmdLine, int nCmdShow)
+{
+	hInst = hInstance;
+	LONG lCount = 0;
+	DWORD SleepTick = 1;
+
+#ifdef _DEBUG
+	::_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
+	init();
+//	InitCommonControls();
+	GetUILanguageFile(UILanguageFile, sizeof(UILanguageFile));
+
+	Busy = TRUE;
+	pCCtrlWindow = new CCtrlWindow();
+	pCCtrlWindow->Create();
+	Busy = FALSE;
+
+	HWND hWnd = pCCtrlWindow->GetSafeHwnd();
+	CtrlWnd = hWnd;
+
+	//////////////////////////////////////////////////////////////////////
+	MSG msg;
+	while (GetMessage(&msg, NULL, 0, 0)) {
+
+		if (IsDialogMessage(hWnd, &msg) != 0) {
+			/* 処理された*/
+		} else {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		while (!PeekMessage(&msg, NULL, NULL, NULL, PM_NOREMOVE)) {
+			// メッセージがない
+			if (!OnIdle(lCount)) {
+				// idle不要
+				if (SleepTick < 500) {	// 最大 501ms未満
+					SleepTick += 2;
+				}
+				lCount = 0;
+				Sleep(SleepTick);
+			} else {
+				// 要idle
+				SleepTick = 0;
+				lCount++;
+			}
+		}
+	}
+
+	// TODO すでに閉じられている、この処理不要?
+	if (pCCtrlWindow) {
+		pCCtrlWindow->DestroyWindow();
+	}
+	pCCtrlWindow = NULL;
+	return ExitCode;
 }

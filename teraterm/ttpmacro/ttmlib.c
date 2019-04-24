@@ -33,7 +33,10 @@
 #include "ttlib.h"
 #include <string.h>
 #include <direct.h>
-#include <Shlobj.h>
+#include <shlobj.h>
+
+#include "compat_win.h"
+#include "ttmlib.h"
 
 static char CurrentDir[MAXPATHLEN];
 
@@ -62,44 +65,62 @@ static SpFolder spfolders[] = {
 	{ NULL,                -1}
 };
 
-void CalcTextExtent(HDC DC, PCHAR Text, LPSIZE s)
+/**
+ * 文字を描画した時のサイズを算出する
+ *	@param[in]	hWnd
+ *	@param[in]	Font	フォントハンドル
+ *						NULLの時はhWndに設定されているフォント
+ *	@param[in]	Text	描画するテキスト
+ *	@param[out]	size	描画サイズ(cx,cy)
+ */
+void CalcTextExtent(HWND hWnd, HFONT hFont, const char *Text, LPSIZE s)
 {
-  int W, H, i, i0;
-  char Temp[512];
-  DWORD dwExt;
+	HDC DC = GetDC(hWnd);
+	int W, H, i, i0;
+	char Temp[512];
+	DWORD dwExt;
+	HFONT prevFont;
+	if (hFont == NULL) {
+		hFont = (HFONT)SendMessage(hWnd, WM_GETFONT, 0, 0);
+	}
+	prevFont = (HFONT)SelectObject(DC, hFont);
 
-  W = 0;
-  H = 0;
-  i = 0;
-  do {
-    i0 = i;
-    while ((Text[i]!=0) &&
-	   (Text[i]!=0x0d) &&
-	   (Text[i]!=0x0a))
-      i++;
-    memcpy(Temp,&Text[i0],i-i0);
-    Temp[i-i0] = 0;
-    if (Temp[0]==0)
-    {
-     Temp[0] = 0x20;
-     Temp[1] = 0;
-    }
-    dwExt = GetTabbedTextExtent(DC,Temp,strlen(Temp),0,NULL);
-    s->cx = LOWORD(dwExt);
-    s->cy = HIWORD(dwExt);
-    if (s->cx > W) W = s->cx;
-    H = H + s->cy;
-    if (Text[i]!=0)
-    {
-      i++;
-      if ((Text[i]==0x0a) &&
-	  (Text[i-1]==0x0d))
-	i++;
-    }
-  } while (Text[i]!=0);
-  if ((i-i0 == 0) && (H > s->cy)) H = H - s->cy;
-  s->cx = W;
-  s->cy = H;
+	W = 0;
+	H = 0;
+	i = 0;
+	do {
+		i0 = i;
+		while ((Text[i]!=0) &&
+			   (Text[i]!=0x0d) &&
+			   (Text[i]!=0x0a))
+			i++;
+		memcpy(Temp,&Text[i0],i-i0);
+		Temp[i-i0] = 0;
+		if (Temp[0]==0)
+		{
+			Temp[0] = 0x20;
+			Temp[1] = 0;
+		}
+		dwExt = GetTabbedTextExtent(DC,Temp,strlen(Temp),0,NULL);
+		s->cx = LOWORD(dwExt);
+		s->cy = HIWORD(dwExt);
+		if (s->cx > W) W = s->cx;
+		H = H + s->cy;
+		if (Text[i]!=0)
+		{
+			i++;
+			if ((Text[i]==0x0a) &&
+				(Text[i-1]==0x0d))
+				i++;
+		}
+	} while (Text[i]!=0);
+	if ((i-i0 == 0) && (H > s->cy)) H = H - s->cy;
+	s->cx = W;
+	s->cy = H;
+	if (prevFont != NULL) {
+		SelectObject(DC, prevFont);
+	}
+	ReleaseDC(hWnd, DC);
 }
 
 void TTMGetDir(PCHAR Dir, int destlen)
@@ -215,4 +236,13 @@ void BringupWindow(HWND hWnd)
 		BringWindowToTop(hWnd);
 		AttachThreadInput(thisThreadId, fgThreadId, FALSE);
 	}
+}
+
+int MessageBoxHaltScript(HWND hWnd)//, const char *UILanguageFile)
+{
+	char uimsg[MAX_UIMSG];
+	char uimsg2[MAX_UIMSG];
+	get_lang_msg("MSG_MACRO_CONF", uimsg, sizeof(uimsg), "MACRO: confirmation", UILanguageFile);
+	get_lang_msg("MSG_MACRO_HALT_SCRIPT", uimsg2, sizeof(uimsg2), "Are you sure that you want to halt this macro script?", UILanguageFile);
+	return MessageBox(hWnd, uimsg2, uimsg, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
 }

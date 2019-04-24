@@ -34,6 +34,9 @@ set(COMMON_SRC
   ../common/compat_w95.h
   ../common/compat_win.h
   ../common/compat_win.cpp
+  ../common/tmfc.cpp
+  ../common/tmfc.h
+  ../common/tmfc_frame.cpp
   ../common/i18n.h
   ../common/dllutil.cpp
   ../common/dllutil.h
@@ -51,6 +54,19 @@ source_group(
   "common"
   FILES
   ${COMMON_SRC}
+  )
+
+set(TTDLG_SRC
+  ../ttpdlg/dlg_res.h
+  ../ttpdlg/ttdlg.c
+  ../ttpdlg/ttdlg.h
+  ../ttpdlg/ttpdlg.rc
+  )
+
+source_group(
+  "ttdlg"
+  FILES
+  ${TTDLG_SRC}
   )
 
 set(SRC
@@ -82,10 +98,10 @@ set(SRC
   tekwin.h
   telnet.c
   telnet.h
-  teraapp.h
   teraprn.cpp
   teraprn.h
   teraterm.cpp
+  teraterml.h
   ttdde.c
   ttdde.h
   ttdialog.c
@@ -119,16 +135,21 @@ set(SRC
   #
   teraterm.manifest
   #
+  svnversion.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/../ttpdlg/svnversion.h
+  #
   ${COMMON_SRC}
+  ${TTDLG_SRC}
   )
 
 include_directories(
   ../common
   ../ttpfile
+  ../ttpdlg
   ${SFMT_INCLUDE_DIRS}
   ${ONIGURUMA_INCLUDE_DIRS}
   .
-  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/../ttpdlg
   )
 
 link_directories(
@@ -136,11 +157,7 @@ link_directories(
   ${SFMT_LIBRARY_DIRS}
   )
 
-set(CMAKE_MFC_FLAG 1)
-
 if (MSVC)
-  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /NODEFAULTLIB:nafxcw.lib /NODEFAULTLIB:LIBCMT.lib")
-  set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /NODEFAULTLIB:nafxcwd.lib /NODEFAULTLIB:LIBCMTD.lib")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DELAYLOAD:imagehlp.dll /DELAYLOAD:user32.dll /DELAYLOAD:shell32.dll")
 endif()
 
@@ -158,14 +175,9 @@ set_target_properties(
 target_link_libraries(
   teraterm
   ttpcmn
-  ttpdlg
   ttpfile
   ttpset
   ttptek
-  optimized nafxcw.lib
-  debug nafxcwd.lib
-  optimized LIBCMT.lib
-  debug LIBCMTD.lib
   optimized onig.lib
   debug onigd.lib
   #
@@ -180,7 +192,6 @@ target_link_libraries(
 add_dependencies(
   teraterm
   ttpcmn
-  ttpdlg
   ttpfile
   ttpset
   ttptek
@@ -241,3 +252,8 @@ if(${CMAKE_GENERATOR} MATCHES "Visual Studio 15 2017")
       "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}$(Configuration)/lang/Traditional Chinese.lng"
     )
 endif()
+
+####
+configure_file(
+  svnversion.h.in
+  ../ttpdlg/svnversion.h @ONLY)

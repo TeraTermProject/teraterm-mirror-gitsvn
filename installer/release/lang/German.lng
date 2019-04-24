@@ -1,4 +1,4 @@
-; Updated by TeraTerm Project (2019-02-28)
+; Updated by TeraTerm Project (2019-04-22)
 ; Last translated (German language) by Frederik Schwarzer (2010-05-17)
 
 [Tera Term]
@@ -52,7 +52,9 @@ MENU_EDIT_SELECTALL=&Alles auswählen
 MENU_SETUP=Ein&stellungen
 MENU_SETUP_TERMINAL=&Terminal-Einstellungen
 MENU_SETUP_WINDOW=&Fenster-Einstellungen
+MENU_SETUP_FONT_SUBMENU=&Schriftart
 MENU_SETUP_FONT=&Schriftart...
+MENU_SETUP_DIALOG_FONT=&Dialog font...
 MENU_SETUP_KEYBOARD=&Keyboard-Einstellungen
 MENU_SETUP_SERIALPORT=Serieller Port
 MENU_SETUP_TCPIP=&Hostliste editieren
@@ -594,6 +596,8 @@ DLG_AUTH_METHOD_PAGEANT=Benutze Pageant
 DLG_AUTH_PRIVATEKEY=Schlüssel:
 DLG_AUTH_LOCALUSER=Lokaler Benutzername:
 DLG_AUTH_HOST_PRIVATEKEY=rhosts-Schlüssel:
+DLG_AUTH_TIP_CONTROL_CODE=control character is entered
+DLG_AUTH_TIP_PASTE_KEY=Use Shift + Insert to paste from clipboard
 MSG_PAGEANT_NOTFOUND=Can't find Pageant.
 MSG_PAGEANT_NOKEY=Pageant has no valid key.
 

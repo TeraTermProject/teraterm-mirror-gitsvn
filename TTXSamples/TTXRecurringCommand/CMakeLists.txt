@@ -8,6 +8,10 @@ endif()
 
 set(COMMON_SRC
   ../../teraterm/common/dlglib.h
+  ../../teraterm/common/dlglib.c
+  ../../teraterm/common/dlglib_cpp.cpp
+  ../../teraterm/common/dlglib_tmpl.cpp
+  ../../teraterm/common/ttlib.c
   )
 
 source_group(
@@ -32,6 +36,12 @@ add_library(
   TTXRecurringCommand SHARED
   ${SRC}
   ${COMMON_SRC}
+  )
+
+set_target_properties(
+  TTXRecurringCommand
+  PROPERTIES
+  PREFIX ""
   )
 
 target_link_libraries(

@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.6)
 
 project(teraterm_all)
 
-option(ENABLE_DPIAWARENESS "Dpiawareness" ON)
 option(ENABLE_TTXSAMPLES "TTXSamples" ON)
 option(USE_UNICODE_API "unicode" OFF)
 
@@ -17,6 +16,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(_WIN32_WINNT "0x0a00")
 if(MSVC)
   # https://www.leeholmes.com/blog/2017/02/27/differences-between-visual-studio-2012-2013-and-2015/
+  if(${CMAKE_GENERATOR} MATCHES "Visual Studio 8 2005")
+    set(_WIN32_WINNT "0x0501")
+  endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_WIN32_WINNT=${_WIN32_WINNT}")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /D_WIN32_WINNT=${_WIN32_WINNT}")
   string(REPLACE "/MD" "/MT" CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
@@ -29,7 +31,8 @@ if(MSVC)
   set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /GF /Gy")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
-  if(${CMAKE_GENERATOR} MATCHES "Visual Studio 15 2017")
+  if(${MSVC_VERSION} GREATER_EQUAL 1910)
+    # Visual Studio 2017以上の時
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /ZI")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
@@ -38,10 +41,8 @@ if(MSVC)
 elseif(MINGW)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32_WINNT=${_WIN32_WINNT}")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WIN32_WINNT=${_WIN32_WINNT}")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra "
-    "-Wno-unused-parameter -static -ffunction-sections -fdata-sections ${C_ONLY_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra "
-    "-Wno-unused-parameter -static -ffunction-sections -fdata-sections")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -static -ffunction-sections -fdata-sections ${C_ONLY_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -static -ffunction-sections -fdata-sections")
   if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static-libgcc -static-libstdc++")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
@@ -57,8 +58,14 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   if(Git_FOUND)
     execute_process(
       COMMAND ${GIT_EXECUTABLE} svn log --oneline -1
-      OUTPUT_VARIABLE ov)
-    string(REGEX MATCH "[0-9]+" SVNVERSION ${ov})
+      RESULT_VARIABLE rv
+      OUTPUT_VARIABLE ov
+      ERROR_QUIET)
+    if(${rv})
+      message("git svn error? please check git svn")
+    else()
+      string(REGEX MATCH "[0-9]+" SVNVERSION ${ov})
+    endif()
   endif()
 elseif(EXISTS "${CMAKE_SOURCE_DIR}/.svn")
   # svn
@@ -85,4 +92,18 @@ add_subdirectory(ttssh2)
 add_subdirectory(TTXKanjiMenu)
 if(${ENABLE_TTXSAMPLES})
   add_subdirectory(TTXSamples)
+endif()
+
+####
+# ソースツリー内に生成ファイルが存在していたら削除する
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/teraterm/ttpdlg/svnversion.h")
+  # r7517より前
+  file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/teraterm/ttpdlg/svnversion.h")
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/teraterm/teraterm/svnversion.h")
+  # r7517以後
+  file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/teraterm/teraterm/svnversion.h")
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ttssh2/ttxssh/puttyversion.h")
+  file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/ttssh2/ttxssh/puttyversion.h")
 endif()

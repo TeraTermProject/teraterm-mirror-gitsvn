@@ -27,11 +27,19 @@
  */
 #include "key.h"
 #include "resource.h"
+#include "dlglib.h"
 
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/ecdsa.h>
 #include <openssl/buffer.h>
+
+#undef DialogBoxParam
+#define DialogBoxParam(p1,p2,p3,p4,p5) \
+	TTDialogBoxParam(p1,p2,p3,p4,p5)
+#undef EndDialog
+#define EndDialog(p1,p2) \
+	TTEndDialog(p1, p2)
 
 #define INTBLOB_LEN 20
 #define SIGBLOB_LEN (2*INTBLOB_LEN)
@@ -592,7 +600,7 @@ BOOL key_copy(Key *dest, Key *src)
 	return TRUE;
 }
 
-char* key_fingerprint_raw(Key *k, enum digest_algorithm dgst_alg, int *dgst_raw_length)
+char* key_fingerprint_raw(Key *k, digest_algorithm dgst_alg, int *dgst_raw_length)
 {
 	const EVP_MD *md = NULL;
 	EVP_MD_CTX ctx;
@@ -879,7 +887,7 @@ key_fingerprint_randomart(const char *alg, u_char *dgst_raw, u_int dgst_raw_len,
 //
 // fingerprint（指紋：ホスト公開鍵のハッシュ）を生成する
 //
-char *key_fingerprint(Key *key, enum fp_rep dgst_rep, enum digest_algorithm dgst_alg)
+char *key_fingerprint(Key *key, enum fp_rep dgst_rep, digest_algorithm dgst_alg)
 {
 	char *retval = NULL, *alg;
 	unsigned char *dgst_raw;
@@ -2188,10 +2196,10 @@ static void hosts_updatekey_dlg_set_fingerprint(PTInstVar pvar, HWND dlg, digest
 
 static BOOL CALLBACK hosts_updatekey_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static HFONT DlgHostsAddFont;
+//	static HFONT DlgHostsAddFont;
 	PTInstVar pvar;
-	LOGFONT logfont;
-	HFONT font;
+//	LOGFONT logfont;
+//	HFONT font;
 	char buf[1024];
 	char *host;
 	struct hostkeys_update_ctx *ctx;
@@ -2239,7 +2247,7 @@ static BOOL CALLBACK hosts_updatekey_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		GetDlgItemText(dlg, IDCANCEL, uimsg, sizeof(uimsg));
 		UTIL_get_lang_msg("BTN_NO", pvar, uimsg);
 		SetDlgItemText(dlg, IDCANCEL, pvar->ts->UIMsg);
-
+#if 0
 		font = (HFONT)SendMessage(dlg, WM_GETFONT, 0, 0);
 		GetObject(font, sizeof(LOGFONT), &logfont);
 		if (UTIL_get_lang_font("DLG_TAHOMA_FONT", dlg, &logfont, &DlgHostsAddFont, pvar)) {
@@ -2257,7 +2265,8 @@ static BOOL CALLBACK hosts_updatekey_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		else {
 			DlgHostsAddFont = NULL;
 		}
-
+#endif
+		CenterWindow(dlg, GetParent(dlg));
 		return TRUE;			/* because we do not set the focus */
 
 	case WM_COMMAND:
@@ -2267,20 +2276,20 @@ static BOOL CALLBACK hosts_updatekey_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		case IDOK:
 
 			EndDialog(dlg, 1);
-
+#if 0
 			if (DlgHostsAddFont != NULL) {
 				DeleteObject(DlgHostsAddFont);
 			}
-
+#endif
 			return TRUE;
 
 		case IDCANCEL:			/* kill the connection */
 			EndDialog(dlg, 0);
-
+#if 0
 			if (DlgHostsAddFont != NULL) {
 				DeleteObject(DlgHostsAddFont);
 			}
-
+#endif
 			return TRUE;
 
 		case IDC_FP_HASH_ALG_MD5:

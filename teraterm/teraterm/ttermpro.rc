@@ -1,14 +1,14 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "..\common\tt_res.h"
+#include "tt_res.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
-
+#include <winresrc.h>
+#define IDC_STATIC -1
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -274,7 +274,6 @@ END
 
 IDD_FILETRANSDLG DIALOGEX 20, 20, 176, 96
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CLASS "FTDlg32"
 FONT 14, "System", 0, 0, 0x0
 BEGIN
     CONTROL         "Filename:",IDC_TRANS_FILENAME,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,15,12,38,10
@@ -462,13 +461,13 @@ END
 
 1 TEXTINCLUDE 
 BEGIN
-    "..\\common\\tt_res.h\0"
+    "tt_res.h\0"
 END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#include ""afxres.h""\r\n"
-    "\0"
+    "#include <winresrc.h>\r\n"
+    "#define IDC_STATIC -1\0"
 END
 
 3 TEXTINCLUDE 
@@ -487,14 +486,14 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_TTERM               ICON                    "..\\common\\teraterm.ico"
-IDI_VT                  ICON                    "..\\common\\vt.ico"
-IDI_TEK                 ICON                    "..\\common\\tek.ico"
-IDI_TTERM_CLASSIC       ICON                    "..\\common\\teraterm_classic.ico"
-IDI_VT_CLASSIC          ICON                    "..\\common\\vt_classic.ico"
-IDI_TTERM_3D            ICON                    "..\\common\\teraterm_3d.ico"
-IDI_VT_3D               ICON                    "..\\common\\vt_3d.ico"
-IDI_CYGTERM             ICON                    "..\\..\\cygterm\\cygterm.ico"
+IDI_TTERM               ICON                    "../common/teraterm.ico"
+IDI_VT                  ICON                    "../common/vt.ico"
+IDI_TEK                 ICON                    "../common/tek.ico"
+IDI_TTERM_CLASSIC       ICON                    "../common/teraterm_classic.ico"
+IDI_VT_CLASSIC          ICON                    "../common/vt_classic.ico"
+IDI_TTERM_3D            ICON                    "../common/teraterm_3d.ico"
+IDI_VT_3D               ICON                    "../common/vt_3d.ico"
+IDI_CYGTERM             ICON                    "../../cygterm/cygterm.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -578,7 +577,11 @@ BEGIN
     BEGIN
         MENUITEM "&Terminal...",                ID_SETUP_TERMINAL
         MENUITEM "&Window...",                  ID_SETUP_WINDOW
-        MENUITEM "&Font...",                    ID_SETUP_FONT
+		POPUP "&Font"
+        BEGIN
+			MENUITEM "&Font...",                ID_SETUP_FONT
+			MENUITEM "&Dialog Font...",         ID_SETUP_DLG_FONT
+	END
         MENUITEM "&Keyboard...",                ID_SETUP_KEYBOARD
         MENUITEM "S&erial port...",             ID_SETUP_SERIALPORT
         MENUITEM "T&CP/IP...",                  ID_SETUP_TCPIP

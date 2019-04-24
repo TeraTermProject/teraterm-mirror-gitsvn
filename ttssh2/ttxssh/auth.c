@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1998-2001, Robert O'Callahan
- * (C) 2004-2017 TeraTerm Project
+ * (C) 2004-2019 TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,25 +32,40 @@
 #include "ssh.h"
 #include "key.h"
 #include "ttlib.h"
+#include "dlglib.h"
 
 #include <io.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <Lmcons.h>		// for UNLEN
+#include <crtdbg.h>
 
 #include "resource.h"
 #include "keyfiles.h"
 #include "libputty.h"
 #include "tipwin.h"
+#include "auth.h"
+
+#if defined(_DEBUG)
+#define malloc(l) _malloc_dbg((l), _NORMAL_BLOCK, __FILE__, __LINE__)
+#define free(p)   _free_dbg((p), _NORMAL_BLOCK)
+#endif
 
 #define AUTH_START_USER_AUTH_ON_ERROR_END 1
 
 #define MAX_AUTH_CONTROL IDC_SSHUSEPAGEANT
 
-static HFONT DlgAuthFont;
-static HFONT DlgTisFont;
-static HFONT DlgAuthSetupFont;
+#undef DialogBoxParam
+#define DialogBoxParam(p1,p2,p3,p4,p5) \
+	TTDialogBoxParam(p1,p2,p3,p4,p5)
+#undef EndDialog
+#define EndDialog(p1,p2) \
+	TTEndDialog(p1, p2)
+
+//static HFONT DlgAuthFont;
+//static HFONT DlgTisFont;
+//static HFONT DlgAuthSetupFont;
 
 void destroy_malloced_string(char **str)
 {
@@ -66,12 +81,19 @@ static int auth_types_to_control_IDs[] = {
 	IDC_SSHUSERHOSTS, IDC_SSHUSETIS, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, IDC_SSHUSEPAGEANT, -1
 };
-static TipWin *tipwin;
 static BOOL UseControlChar = TRUE;
 
-LRESULT CALLBACK password_wnd_proc(HWND control, UINT msg,
-                                   WPARAM wParam, LPARAM lParam)
+typedef struct {
+	WNDPROC ProcOrg;
+	PTInstVar pvar;
+	TipWin *tipwin;
+} TPasswordControlData;
+
+static LRESULT CALLBACK password_wnd_proc(HWND control, UINT msg,
+										  WPARAM wParam, LPARAM lParam)
 {
+	LRESULT result;
+	TPasswordControlData *data = (TPasswordControlData *)GetWindowLongPtr(control, GWLP_USERDATA);
 	switch (msg) {
 	case WM_CHAR:
 		if (!UseControlChar) {
@@ -84,58 +106,56 @@ LRESULT CALLBACK password_wnd_proc(HWND control, UINT msg,
 			SendMessage(control, EM_REPLACESEL, (WPARAM) TRUE,
 			            (LPARAM) (TCHAR *) chars);
 
-			if (tipwin == NULL) {
+			if (data->tipwin == NULL) {
 				TCHAR uimsg[MAX_UIMSG];
 				RECT rect;
-				const TCHAR *s;
-				s = _T("制御文字が入力されました")
-					_T("\n")
-					_T("英語:")
-					_T("\n")
-					_T("control character is entered");
-				_tcscpy_s(uimsg, _countof(uimsg), s);
+				PTInstVar pvar = data->pvar;
+				UTIL_get_lang_msg("DLG_AUTH_TIP_CONTROL_CODE", pvar, "control character is entered");
+				_tcscpy_s(uimsg, _countof(uimsg), pvar->ts->UIMsg);
 				if (wParam == 'V' - 'A' + 1) {
 					// CTRL + V
-					s = _T("\n")
-						_T("Shift+Insertでクリップボードからペーストできます")
-						_T("\n")
-						_T("英語:")
-						_T("\n")
-						_T("Use Shift + Insert to paste from clipboard");
-						_tcscat_s(uimsg, _countof(uimsg), s);
+					_tcscat_s(uimsg, _countof(uimsg), _T("\n"));
+					UTIL_get_lang_msg("DLG_AUTH_TIP_PASTE_KEY", pvar, "Use Shift + Insert to paste from clipboard");
+					_tcscat_s(uimsg, _countof(uimsg), pvar->ts->UIMsg);
 				}
 				GetWindowRect(control, &rect);
-				tipwin = TipWinCreate(control, rect.left, rect.bottom, uimsg);
+				data->tipwin = TipWinCreate(control, rect.left, rect.bottom, uimsg);
 			}
 
 			return 0;
 		} else {
-			if (tipwin != NULL) {
-				TipWinDestroy(tipwin);
-				tipwin = NULL;
+			if (data->tipwin != NULL) {
+				TipWinDestroy(data->tipwin);
+				data->tipwin = NULL;
 			}
-		}
-		break;
-	case WM_NCDESTROY:
-		if (tipwin != NULL) {
-			TipWinDestroy(tipwin);
-			tipwin = NULL;
 		}
 		break;
 	}
 
-	return CallWindowProc((WNDPROC) GetWindowLong(control, GWL_USERDATA),
-	                      control, msg, wParam, lParam);
+	result = CallWindowProc((WNDPROC)data->ProcOrg,
+							control, msg, wParam, lParam);
+
+	if (msg == WM_NCDESTROY) {
+		SetWindowLongPtr(control, GWLP_WNDPROC, (LONG_PTR)data->ProcOrg);
+		if (data->tipwin != NULL) {
+			TipWinDestroy(data->tipwin);
+			data->tipwin = NULL;
+		}
+		free(data);
+	}
+
+	return result;
 }
 
-static void init_password_control(HWND dlg)
+void init_password_control(PTInstVar pvar, HWND dlg, int item)
 {
-	HWND passwordControl = GetDlgItem(dlg, IDC_SSHPASSWORD);
-
-	SetWindowLong(passwordControl, GWL_USERDATA,
-	              SetWindowLong(passwordControl, GWL_WNDPROC,
-	                            (LONG) password_wnd_proc));
-
+	HWND passwordControl = GetDlgItem(dlg, item);
+	TPasswordControlData *data = (TPasswordControlData *)malloc(sizeof(TPasswordControlData));
+	data->ProcOrg = (WNDPROC)GetWindowLongPtr(passwordControl, GWLP_WNDPROC);
+	data->pvar = pvar;
+	data->tipwin = NULL;
+	SetWindowLongPtr(passwordControl, GWLP_WNDPROC, (LONG_PTR)password_wnd_proc);
+	SetWindowLongPtr(passwordControl, GWLP_USERDATA, (LONG_PTR)data);
 	SetFocus(passwordControl);
 }
 
@@ -277,7 +297,7 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 	SetDlgItemText(dlg, IDCANCEL, pvar->ts->UIMsg);
 
 	init_auth_machine_banner(pvar, dlg);
-	init_password_control(dlg);
+	init_password_control(pvar, dlg, IDC_SSHPASSWORD);
 
 	// 認証失敗後はラベルを書き換え
 	if (pvar->auth_state.failed_method != SSH_AUTH_NONE) {
@@ -718,9 +738,11 @@ static BOOL end_auth_dlg(PTInstVar pvar, HWND dlg)
 	}
 
 	EndDialog(dlg, 1);
+#if 0
 	if (DlgAuthFont != NULL) {
 		DeleteObject(DlgAuthFont);
 	}
+#endif
 
 	return TRUE;
 }
@@ -774,8 +796,8 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 	const int IDC_TIMER3 = 302; // challenge で ask4passwd でCheckAuthListFirst が FALSE のとき
 	const int autologin_timeout = 10; // ミリ秒
 	PTInstVar pvar;
-	LOGFONT logfont;
-	HFONT font;
+//	LOGFONT logfont;
+//	HFONT font;
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -784,7 +806,7 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		SetWindowLong(dlg, DWL_USER, lParam);
 
 		init_auth_dlg(pvar, dlg);
-
+#if 0
 		font = (HFONT)SendMessage(dlg, WM_GETFONT, 0, 0);
 		GetObject(font, sizeof(LOGFONT), &logfont);
 		if (UTIL_get_lang_font("DLG_TAHOMA_FONT", dlg, &logfont, &DlgAuthFont, pvar)) {
@@ -813,6 +835,7 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		else {
 			DlgAuthFont = NULL;
 		}
+#endif
 		UseControlChar = TRUE;
 		CheckDlgButton(dlg, IDC_USE_CONTROL_CHARACTER, UseControlChar ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(dlg, IDC_CLEAR_CLIPBOARD, BST_UNCHECKED);
@@ -838,6 +861,7 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 				SetTimer(dlg, IDC_TIMER3, autologin_timeout, 0);
 			}
 		}
+		CenterWindow(dlg, GetParent(dlg));
 		return FALSE;			/* because we set the focus */
 
 	case WM_TIMER:
@@ -962,11 +986,11 @@ canceled:
 			pvar->auth_state.auth_dialog = NULL;
 			notify_closed_connection(pvar, "authentication cancelled");
 			EndDialog(dlg, 0);
-
+#if 0
 			if (DlgAuthFont != NULL) {
 				DeleteObject(DlgAuthFont);
 			}
-
+#endif
 			return TRUE;
 
 		case IDC_SSHUSERNAME:
@@ -1253,7 +1277,7 @@ static void init_TIS_dlg(PTInstVar pvar, HWND dlg)
 	SetDlgItemText(dlg, IDCANCEL, pvar->ts->UIMsg);
 
 	init_auth_machine_banner(pvar, dlg);
-	init_password_control(dlg);
+	init_password_control(pvar, dlg, IDC_SSHPASSWORD);
 
 	if (pvar->auth_state.TIS_prompt != NULL) {
 		if (strlen(pvar->auth_state.TIS_prompt) > 10000) {
@@ -1294,8 +1318,8 @@ static BOOL CALLBACK TIS_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
                                   LPARAM lParam)
 {
 	PTInstVar pvar;
-	LOGFONT logfont;
-	HFONT font;
+//	LOGFONT logfont;
+//	HFONT font;
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -1304,7 +1328,7 @@ static BOOL CALLBACK TIS_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		SetWindowLong(dlg, DWL_USER, lParam);
 
 		init_TIS_dlg(pvar, dlg);
-
+#if 0
 		font = (HFONT)SendMessage(dlg, WM_GETFONT, 0, 0);
 		GetObject(font, sizeof(LOGFONT), &logfont);
 		if (UTIL_get_lang_font("DLG_TAHOMA_FONT", dlg, &logfont, &DlgTisFont, pvar)) {
@@ -1317,13 +1341,14 @@ static BOOL CALLBACK TIS_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		else {
 			DlgTisFont = NULL;
 		}
-
+#endif
 		// /auth=challenge を追加 (2007.10.5 maya)
 		if (pvar->ssh2_autologin == 1) {
 			SetDlgItemText(dlg, IDC_SSHPASSWORD, pvar->ssh2_password);
 			SendMessage(dlg, WM_COMMAND, IDOK, 0);
 		}
 
+		CenterWindow(dlg, GetParent(dlg));
 		return FALSE;			/* because we set the focus */
 
 	case WM_COMMAND:
@@ -1331,21 +1356,22 @@ static BOOL CALLBACK TIS_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 
 		switch (LOWORD(wParam)) {
 		case IDOK:
+#if 0
 			if (DlgTisFont != NULL) {
 				DeleteObject(DlgTisFont);
 			}
-
+#endif
 			return end_TIS_dlg(pvar, dlg);
 
 		case IDCANCEL:			/* kill the connection */
 			pvar->auth_state.auth_dialog = NULL;
 			notify_closed_connection(pvar, "authentication cancelled");
 			EndDialog(dlg, 0);
-
+#if 0
 			if (DlgTisFont != NULL) {
 				DeleteObject(DlgTisFont);
 			}
-
+#endif
 			return TRUE;
 
 		default:
@@ -1516,8 +1542,8 @@ static BOOL CALLBACK default_auth_dlg_proc(HWND dlg, UINT msg,
 										   WPARAM wParam, LPARAM lParam)
 {
 	PTInstVar pvar;
-	LOGFONT logfont;
-	HFONT font;
+//	LOGFONT logfont;
+//	HFONT font;
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -1525,7 +1551,7 @@ static BOOL CALLBACK default_auth_dlg_proc(HWND dlg, UINT msg,
 		SetWindowLong(dlg, DWL_USER, lParam);
 
 		init_default_auth_dlg(pvar, dlg);
-
+#if 0
 		font = (HFONT)SendMessage(dlg, WM_GETFONT, 0, 0);
 		GetObject(font, sizeof(LOGFONT), &logfont);
 		if (UTIL_get_lang_font("DLG_TAHOMA_FONT", dlg, &logfont, &DlgAuthSetupFont, pvar)) {
@@ -1550,7 +1576,8 @@ static BOOL CALLBACK default_auth_dlg_proc(HWND dlg, UINT msg,
 		else {
 			DlgAuthSetupFont = NULL;
 		}
-
+#endif
+		CenterWindow(dlg, GetParent(dlg));
 		return TRUE;			/* because we do not set the focus */
 
 	case WM_COMMAND:
@@ -1558,20 +1585,20 @@ static BOOL CALLBACK default_auth_dlg_proc(HWND dlg, UINT msg,
 
 		switch (LOWORD(wParam)) {
 		case IDOK:
-
+#if 0
 			if (DlgAuthSetupFont != NULL) {
 				DeleteObject(DlgAuthSetupFont);
 			}
-
+#endif
 			return end_default_auth_dlg(pvar, dlg);
 
 		case IDCANCEL:
 			EndDialog(dlg, 0);
-
+#if 0
 			if (DlgAuthSetupFont != NULL) {
 				DeleteObject(DlgAuthSetupFont);
 			}
-
+#endif
 			return TRUE;
 
 		case IDC_CHOOSERSAFILE:

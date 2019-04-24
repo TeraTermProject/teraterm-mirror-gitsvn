@@ -26,23 +26,24 @@ sub get_file_paths {
 	closedir(DIR);
 	foreach my $path (sort @temp) {
 		next if( $path =~ /^\.{1,2}$/ );                # '.' と '..' はスキップ
-		next if( $path =~ /^\.svn$/ );                # '.svn' はスキップ
-		
+		next if( $path =~ /^\.svn$/ );                  # '.svn' はスキップ
+
 		my $full_path = "$top_dir" . '/' . "$path";
-		next if (-B $full_path);     # バイナリファイルはスキップ
-		
-#		print "$full_path\r\n";                     # 表示だけなら全てを表示してくれる-------
+#		print "$full_path\r\n";                         # 表示だけなら全てを表示してくれる-------
 		push(@paths, $full_path);                       # データとして取り込んでも前の取り込みが初期化される
 		if( -d "$top_dir/$path" ){                      #-- ディレクトリの場合は自分自身を呼び出す
 			&get_file_paths("$full_path");
-			
+		} elsif (-B $full_path) {
+			# バイナリファイルはスキップ
+			next;
+
 		} elsif (&check_exclude_file($path)) {
 			print "$full_path skipped\n";
 			next;
-			
+
 		} else {
 			check_sjis_code($full_path);
-		
+
 		}
 	}
 	return \@paths;
@@ -53,7 +54,7 @@ sub get_file_paths {
 sub check_exclude_file {
 	my($fn) = shift;
 	my($s);
-	
+
 	foreach $s (@exclude_files) {
 		if ($fn eq $s) {
 			return 1;
@@ -83,8 +84,10 @@ sub check_sjis_code {
 #			printf "%s\n", $enc->name;
 			if ($enc->name !~ /ascii/) {
 #				printf "%s\n", $enc->name;
-				print "$filename:$no: $1\n";
-				print "$line\n";
+				if (!check_skipped_line($line)) {
+					print "$filename:$no: $1\n";
+					print "$line\n";
+				}
 			}
 		}
 #		if ($line =~ /([\xA1-\xDF]|[\x81-\x9F\xE0-\xEF][\x40-\x7E\x80-\xFC])/) {
@@ -96,3 +99,19 @@ sub check_sjis_code {
 	close(FP);
 }
 
+# 行が対象外かどうかをチェックする
+#   true: 対象外である
+#   false: 対象外ではない 
+sub check_skipped_line {
+	my($line) = shift;
+	my($pos);
+	
+#	print "[$line]";
+	
+	# UTF-8 BOM
+	$pos = index($line, pack("C3", 0xef, 0xbb, 0xbf));
+#	print "$pos\n";
+	return 1 if ($pos != -1);	
+
+	return 0;
+}

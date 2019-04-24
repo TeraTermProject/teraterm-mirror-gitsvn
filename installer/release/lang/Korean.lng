@@ -1,4 +1,4 @@
-; Updated by TeraTerm Project (2019-02-28)
+; Updated by TeraTerm Project (2019-04-22)
 ; Last translated (Korean language) by Daehong Kim (2013-07-25)
 
 [Tera Term]
@@ -52,7 +52,9 @@ MENU_EDIT_SELECTALL=전체 선택(&A)
 MENU_SETUP=설정(&S)
 MENU_SETUP_TERMINAL=터미널(&T)...
 MENU_SETUP_WINDOW=창(&W)...
+MENU_SETUP_FONT_SUBMENU=글꼴(&F)
 MENU_SETUP_FONT=글꼴(&F)...
+MENU_SETUP_DIALOG_FONT=&Dialog font...
 MENU_SETUP_KEYBOARD=키보드(&K)...
 MENU_SETUP_SERIALPORT=시리얼포트(&E)...
 MENU_SETUP_TCPIP=T&CP/IP...
@@ -594,6 +596,8 @@ DLG_AUTH_METHOD_PAGEANT=Pageant 사용(&A)
 DLG_AUTH_PRIVATEKEY=개인키(&K):
 DLG_AUTH_LOCALUSER=지역 사용자이름(&U):
 DLG_AUTH_HOST_PRIVATEKEY=호스트 개인키(&F):
+DLG_AUTH_TIP_CONTROL_CODE=control character is entered
+DLG_AUTH_TIP_PASTE_KEY=Use Shift + Insert to paste from clipboard
 MSG_PAGEANT_NOTFOUND=Pageant를 찾을 수 없습니다.
 MSG_PAGEANT_NOKEY=Pageant가 유효한 키를 가지고 있지 않습니다.
 

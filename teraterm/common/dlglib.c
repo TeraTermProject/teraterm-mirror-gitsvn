@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 1994-1998 T. Teranishi
- * (C) 2008-2018 TeraTerm Project
+ * (C) 2008-2019 TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,13 @@
 #include <stdio.h>
 #include <commctrl.h>
 #include <tchar.h>
+#include <crtdbg.h>
 #include "ttlib.h"	// for get_lang_font()
+
+#if defined(_DEBUG) && !defined(_CRTDBG_MAP_ALLOC)
+#define malloc(l) _malloc_dbg((l), _NORMAL_BLOCK, __FILE__, __LINE__)
+#define free(p)   _free_dbg((p), _NORMAL_BLOCK)
+#endif
 
 void EnableDlgItem(HWND HDlg, int FirstId, int LastId)
 {
@@ -428,97 +434,6 @@ BOOL IsExistFontA(const char *face, BYTE charset, BOOL strict)
 	EnumFontFamiliesExA(hDC, &lf, (FONTENUMPROCA)IsExistFontSubA, (LPARAM)&info, 0);
 	ReleaseDC(NULL, hDC);
 	return info.found;
-}
-
-/**
- *	ダイアログフォントを取得する
- *	エラーは発生しない
- */
-void GetMessageboxFont(LOGFONT *logfont)
-{
-	NONCLIENTMETRICS nci;
-	const int st_size = CCSIZEOF_STRUCT(NONCLIENTMETRICS, lfMessageFont);
-	BOOL r;
-
-	memset(&nci, 0, sizeof(nci));
-	nci.cbSize = st_size;
-	r = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, st_size, &nci, 0);
-	assert(r == TRUE);
-	*logfont = nci.lfStatusFont;
-}
-
-/**
- *	使用するダイアログフォントを決定する
- */
-void SetDialogFont(const char *SetupFName,
-				   const char *UILanguageFile, const char *Section)
-{
-	// teraterm.iniの指定
-	if (SetupFName != NULL) {
-		LOGFONTA logfont;
-		BOOL result;
-		result = GetI18nLogfont("Tera Term", "DlgFont", &logfont, 0, SetupFName);
-		if (result == TRUE) {
-			result = IsExistFontA(logfont.lfFaceName, logfont.lfCharSet, TRUE);
-			if (result == TRUE) {
-				TTSetDlgFontA(logfont.lfFaceName, logfont.lfHeight, logfont.lfCharSet);
-				return;
-			}
-		}
-	}
-
-	// .lngの指定
-	if (UILanguageFile != NULL) {
-		static const char *dlg_font_keys[] = {
-			"DLG_FONT",
-			"DLG_TAHOMA_FONT",
-			"DLG_SYSTEM_FONT",
-		};
-		BOOL result = FALSE;
-		LOGFONTA logfont;
-		size_t i;
-		if (Section != NULL) {
-			for (i = 0; i < _countof(dlg_font_keys); i++) {
-				result = GetI18nLogfont(Section, dlg_font_keys[i], &logfont, 0, UILanguageFile);
-				if (result == FALSE) {
-					continue;
-				}
-				if (logfont.lfFaceName[0] == '\0') {
-					break;
-				}
-				if (IsExistFontA(logfont.lfFaceName, logfont.lfCharSet, TRUE)) {
-					break;
-				}
-			}
-		}
-		if (result == FALSE) {
-			for (i = 0; i < _countof(dlg_font_keys); i++) {
-				result = GetI18nLogfont("Tera Term", dlg_font_keys[i], &logfont, 0, UILanguageFile);
-				if (result == FALSE) {
-					continue;
-				}
-				if (logfont.lfFaceName[0] == '\0') {
-					break;
-				}
-				if (IsExistFontA(logfont.lfFaceName, logfont.lfCharSet, TRUE)) {
-					break;
-				}
-			}
-		}
-		if (result == TRUE) {
-			TTSetDlgFontA(logfont.lfFaceName, logfont.lfHeight, logfont.lfCharSet);
-			return;
-		}
-	}
-
-	// ini,lngで指定されたフォントが見つからなかったとき、
-	// 文字化けで正しく表示されない事態となる
-	// messagebox()のフォントをとりあえず選択しておく
-	{
-		LOGFONT logfont;
-		GetMessageboxFont(&logfont);
-		TTSetDlgFont(logfont.lfFaceName, logfont.lfHeight, logfont.lfCharSet);
-	}
 }
 
 HFONT SetDlgFonts(HWND hDlg, const int nIDDlgItems[], int nIDDlgItemCount,

@@ -1481,17 +1481,17 @@ static void init_default_auth_dlg(PTInstVar pvar, HWND dlg)
 	const static DlgTextInfo text_info[] = {
 		{ 0, "DLG_AUTHSETUP_TITLE" },
 		{ IDC_SSHAUTHBANNER, "DLG_AUTHSETUP_BANNER" },
-//		{ IDC_SSHUSERNAMELABEL, "DLG_AUTHSETUP_USERNAME" },
+		{ IDC_SSH_NO_USERNAME, "DLG_AUTHSETUP_NO_USERNAME" },
 		{ IDC_SSH_DEFAULTUSERNAME, "DLG_AUTHSETUP_USERNAME" },
+		{ IDC_SSH_WINDOWS_USERNAME, "DLG_AUTHSETUP_SYSTEM_USERNAME" },
+		{ IDC_SSH_WINDOWS_USERNAME_TEXT, "DLG_AUTHSETUP_SYSTEM_USERNAME_TEXT" },
 		{ IDC_SSHUSEPASSWORD, "DLG_AUTHSETUP_METHOD_PASSWORD" },
 		{ IDC_SSHUSERSA, "DLG_AUTHSETUP_METHOD_RSA" },
 		{ IDC_SSHUSERHOSTS, "DLG_AUTHSETUP_METHOD_RHOST" },
 		{ IDC_SSHUSETIS, "DLG_AUTHSETUP_METHOD_CHALLENGE" },
 		{ IDC_SSHUSEPAGEANT, "DLG_AUTHSETUP_METHOD_PAGEANT" },
-		//{ IDC_CHOOSERSAFILE, "DLG_AUTH_PRIVATEKEY" },
 		{ IDC_RSAFILENAMELABEL, "DLG_AUTH_PRIVATEKEY" },
 		{ IDC_LOCALUSERNAMELABEL, "DLG_AUTH_LOCALUSER" },
-		//{ IDC_CHOOSEHOSTRSAFILE, "DLG_AUTH_HOST_PRIVATEKEY" },
 		{ IDC_HOSTRSAFILENAMELABEL, "DLG_AUTH_HOST_PRIVATEKEY" },
 		{ IDC_CHECKAUTH, "DLG_AUTHSETUP_CHECKAUTH" },
 		{ IDOK, "BTN_OK" },
@@ -1499,52 +1499,6 @@ static void init_default_auth_dlg(PTInstVar pvar, HWND dlg)
 	};
 
 	SetI18DlgStrs("TTSSH", dlg, text_info, _countof(text_info), pvar->ts->UILanguageFile);
-#if 0
-	char uimsg[MAX_UIMSG];
-
-	GetWindowText(dlg, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTHSETUP_TITLE", pvar, uimsg);
-	SetWindowText(dlg, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHAUTHBANNER, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTHSETUP_BANNER", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHAUTHBANNER, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSERNAMELABEL, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTHSETUP_USERNAME", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSERNAMELABEL, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSEPASSWORD, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTHSETUP_METHOD_PASSWORD", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSEPASSWORD, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSERSA, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTHSETUP_METHOD_RSA", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSERSA, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSERHOSTS, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTHSETUP_METHOD_RHOST", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSERHOSTS, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSETIS, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTHSETUP_METHOD_CHALLENGE", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSETIS, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_SSHUSEPAGEANT, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTHSETUP_METHOD_PAGEANT", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_SSHUSEPAGEANT, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_CHOOSERSAFILE, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_PRIVATEKEY", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_CHOOSERSAFILE, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_LOCALUSERNAMELABEL, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_LOCALUSER", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_LOCALUSERNAMELABEL, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_CHOOSEHOSTRSAFILE, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTH_HOST_PRIVATEKEY", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_CHOOSEHOSTRSAFILE, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDC_CHECKAUTH, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("DLG_AUTHSETUP_CHECKAUTH", pvar, uimsg);
-	SetDlgItemText(dlg, IDC_CHECKAUTH, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDOK, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("BTN_OK", pvar, uimsg);
-	SetDlgItemText(dlg, IDOK, pvar->ts->UIMsg);
-	GetDlgItemText(dlg, IDCANCEL, uimsg, sizeof(uimsg));
-	UTIL_get_lang_msg("BTN_CANCEL", pvar, uimsg);
-	SetDlgItemText(dlg, IDCANCEL, pvar->ts->UIMsg);
-#endif
 
 	switch (pvar->settings.DefaultAuthMethod) {
 	case SSH_AUTH_RSA:

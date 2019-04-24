@@ -1,4 +1,4 @@
-; Updated by TeraTerm Project (2019-04-22)
+; Updated by TeraTerm Project (2019-04-24)
 
 [Tera Term]
 DLG_SYSTEM_FONT=ＭＳ Ｐゴシック,12,128
@@ -601,7 +601,10 @@ MSG_PAGEANT_NOKEY=Pageant に有効な鍵が登録されていません.
 ; dlg auth setup
 DLG_AUTHSETUP_TITLE=TTSSH: 認証設定
 DLG_AUTHSETUP_BANNER=通常使用する認証方式:
-DLG_AUTHSETUP_USERNAME=ユーザ名(&N):
+DLG_AUTHSETUP_NO_USERNAME=何も入力しない(&D)
+DLG_AUTHSETUP_USERNAME=次のユーザ名を使用(&N):
+DLG_AUTHSETUP_SYSTEM_USERNAME=システムのユーザー名を使用(&E):
+DLG_AUTHSETUP_SYSTEM_USERNAME_TEXT=現在のログインユーザー名 "%s"
 DLG_AUTHSETUP_METHOD_PASSWORD=プレインパスワードを使う(&L)
 DLG_AUTHSETUP_METHOD_RSA=&RSA/DSA/ECDSA/ED25519鍵を使う
 DLG_AUTHSETUP_METHOD_RHOST=r&hostsを使う(SSH1)

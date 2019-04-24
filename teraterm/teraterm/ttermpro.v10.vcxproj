@@ -124,7 +124,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>onig_sd.lib;comctl32.lib;ws2_32.lib;imagehlp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>onig_s.lib;comctl32.lib;ws2_32.lib;imagehlp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>$(SolutionDir)..\libs\oniguruma\src;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>imagehlp.dll;user32.dll;shell32.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
@@ -188,8 +188,10 @@
     <None Include="..\..\cygterm\cygterm.ico" />
     <None Include="..\common\tek.ico" />
     <None Include="..\common\Teraterm.ico" />
+    <None Include="..\common\teraterm_3d.ico" />
     <None Include="..\common\teraterm_classic.ico" />
     <None Include="..\common\vt.ico" />
+    <None Include="..\common\vt_3d.ico" />
     <None Include="..\common\vt_classic.ico" />
   </ItemGroup>
   <ItemGroup>

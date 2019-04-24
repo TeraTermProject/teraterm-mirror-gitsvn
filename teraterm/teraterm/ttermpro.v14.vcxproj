@@ -76,7 +76,7 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0411</Culture>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\libs\oniguruma\src;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>onig_sd.lib;comctl32.lib;ws2_32.lib;imagehlp.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -187,8 +187,10 @@
     <Image Include="..\..\cygterm\cygterm.ico" />
     <Image Include="..\common\tek.ico" />
     <Image Include="..\common\Teraterm.ico" />
+    <Image Include="..\common\teraterm_3d.ico" />
     <Image Include="..\common\teraterm_classic.ico" />
     <Image Include="..\common\vt.ico" />
+    <Image Include="..\common\vt_3d.ico" />
     <Image Include="..\common\vt_classic.ico" />
   </ItemGroup>
   <ItemGroup>

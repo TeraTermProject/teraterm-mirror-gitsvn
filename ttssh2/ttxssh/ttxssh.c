@@ -4402,8 +4402,8 @@ static BOOL CALLBACK TTXKeyGenerator(HWND dlg, UINT msg, WPARAM wParam,
 		}
 #endif
 
-		init_password_control(pvar, dlg, IDC_KEY_EDIT);
-		init_password_control(pvar, dlg, IDC_CONFIRM_EDIT);
+		init_password_control(pvar, dlg, IDC_KEY_EDIT, NULL);
+		init_password_control(pvar, dlg, IDC_CONFIRM_EDIT, NULL);
 
 		// default key type
 		SendMessage(GetDlgItem(dlg, IDC_RSA_TYPE), BM_SETCHECK, BST_CHECKED, 0);

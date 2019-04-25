@@ -81,14 +81,21 @@ static int auth_types_to_control_IDs[] = {
 	IDC_SSHUSERHOSTS, IDC_SSHUSETIS, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, IDC_SSHUSEPAGEANT, -1
 };
-static BOOL UseControlChar = TRUE;
-static BOOL ShowPassPhrase = FALSE;
 
 typedef struct {
 	WNDPROC ProcOrg;
 	PTInstVar pvar;
 	TipWin *tipwin;
+	BOOL *UseControlChar;
 } TPasswordControlData;
+
+static void password_wnd_proc_close_tooltip(TPasswordControlData *data)
+{
+	if (data->tipwin != NULL) {
+		TipWinDestroy(data->tipwin);
+		data->tipwin = NULL;
+	}
+}
 
 static LRESULT CALLBACK password_wnd_proc(HWND control, UINT msg,
 										  WPARAM wParam, LPARAM lParam)
@@ -97,11 +104,9 @@ static LRESULT CALLBACK password_wnd_proc(HWND control, UINT msg,
 	TPasswordControlData *data = (TPasswordControlData *)GetWindowLongPtr(control, GWLP_USERDATA);
 	switch (msg) {
 	case WM_CHAR:
-		if (!UseControlChar) {
-			// 制御文字は使用しない
-			break;
-		}
-		if ((GetKeyState(VK_CONTROL) & 0x8000) != 0) {
+		if ((data->UseControlChar == NULL || *data->UseControlChar == TRUE) &&
+			(GetKeyState(VK_CONTROL) & 0x8000) != 0)
+		{	// 制御文字を使用する && CTRLキーが押されている
 			TCHAR chars[] = { (TCHAR) wParam, 0 };
 
 			SendMessage(control, EM_REPLACESEL, (WPARAM) TRUE,
@@ -125,17 +130,11 @@ static LRESULT CALLBACK password_wnd_proc(HWND control, UINT msg,
 
 			return 0;
 		} else {
-			if (data->tipwin != NULL) {
-				TipWinDestroy(data->tipwin);
-				data->tipwin = NULL;
-			}
+			password_wnd_proc_close_tooltip(data);
 		}
 		break;
 	case WM_KILLFOCUS:
-		if (data->tipwin != NULL) {
-			TipWinDestroy(data->tipwin);
-			data->tipwin = NULL;
-		}
+		password_wnd_proc_close_tooltip(data);
 		break;
 	}
 
@@ -144,23 +143,21 @@ static LRESULT CALLBACK password_wnd_proc(HWND control, UINT msg,
 
 	if (msg == WM_NCDESTROY) {
 		SetWindowLongPtr(control, GWLP_WNDPROC, (LONG_PTR)data->ProcOrg);
-		if (data->tipwin != NULL) {
-			TipWinDestroy(data->tipwin);
-			data->tipwin = NULL;
-		}
+		password_wnd_proc_close_tooltip(data);
 		free(data);
 	}
 
 	return result;
 }
 
-void init_password_control(PTInstVar pvar, HWND dlg, int item)
+void init_password_control(PTInstVar pvar, HWND dlg, int item, BOOL *UseControlChar)
 {
 	HWND passwordControl = GetDlgItem(dlg, item);
 	TPasswordControlData *data = (TPasswordControlData *)malloc(sizeof(TPasswordControlData));
 	data->ProcOrg = (WNDPROC)GetWindowLongPtr(passwordControl, GWLP_WNDPROC);
 	data->pvar = pvar;
 	data->tipwin = NULL;
+	data->UseControlChar = UseControlChar;
 	SetWindowLongPtr(passwordControl, GWLP_WNDPROC, (LONG_PTR)password_wnd_proc);
 	SetWindowLongPtr(passwordControl, GWLP_USERDATA, (LONG_PTR)data);
 	SetFocus(passwordControl);
@@ -249,7 +246,7 @@ static void update_server_supported_types(PTInstVar pvar, HWND dlg)
 	}
 }
 
-static void init_auth_dlg(PTInstVar pvar, HWND dlg)
+static void init_auth_dlg(PTInstVar pvar, HWND dlg, BOOL *UseControlChar)
 {
 	const static DlgTextInfo text_info[] = {
 		{ 0, "DLG_AUTH_TITLE" },
@@ -274,7 +271,7 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 	SetI18DlgStrs("TTSSH", dlg, text_info, _countof(text_info), pvar->ts->UILanguageFile);
 
 	init_auth_machine_banner(pvar, dlg);
-	init_password_control(pvar, dlg, IDC_SSHPASSWORD);
+	init_password_control(pvar, dlg, IDC_SSHPASSWORD, UseControlChar);
 
 	// 認証失敗後はラベルを書き換え
 	if (pvar->auth_state.failed_method != SSH_AUTH_NONE) {
@@ -802,6 +799,8 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 	PTInstVar pvar;
 //	LOGFONT logfont;
 //	HFONT font;
+	static BOOL UseControlChar;
+	static BOOL ShowPassPhrase;
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -809,7 +808,9 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		pvar->auth_state.auth_dialog = dlg;
 		SetWindowLong(dlg, DWL_USER, lParam);
 
-		init_auth_dlg(pvar, dlg);
+		UseControlChar = TRUE;
+		ShowPassPhrase = FALSE;
+		init_auth_dlg(pvar, dlg, &UseControlChar);
 #if 0
 		font = (HFONT)SendMessage(dlg, WM_GETFONT, 0, 0);
 		GetObject(font, sizeof(LOGFONT), &logfont);
@@ -840,7 +841,6 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 			DlgAuthFont = NULL;
 		}
 #endif
-		UseControlChar = TRUE;
 
 		// SSH2 autologinが有効の場合は、タイマを仕掛ける。 (2004.12.1 yutaka)
 		if (pvar->ssh2_autologin == 1) {
@@ -1054,22 +1054,22 @@ canceled:
 			HMENU hMenu= CreatePopupMenu();
 			GetI18nStrT("TTSSH", "DLG_AUTH_PASTE_CLIPBOARD",
 						uimsg, _countof(uimsg),
-						"Paste from clipboard",
+						"Paste from &clipboard",
 						pvar->ts->UILanguageFile);
 			AppendMenu(hMenu, MF_ENABLED | MF_STRING, 1, uimsg);
 			GetI18nStrT("ttssh", "DLG_AUTH_CLEAR_CLIPBOARD",
 						uimsg, _countof(uimsg),
-						"and clear clipboard",
+						"Paste from &clipboard and cl&ear clipboard",
 						pvar->ts->UILanguageFile);
 			AppendMenu(hMenu, MF_ENABLED | MF_STRING, 2, uimsg);
 			GetI18nStrT("ttssh", "DLG_AUTH_USE_CONTORL_CHARACTERS",
 						uimsg, _countof(uimsg),
-						"Use control characters",
+						"Use control charac&ters",
 						pvar->ts->UILanguageFile);
 			AppendMenu(hMenu, MF_ENABLED | MF_STRING  | (UseControlChar ? MFS_CHECKED : 0), 3, uimsg);
 			GetI18nStrT("ttssh", "DLG_AUTH_SHOW_PASSPHRASE",
 						uimsg, _countof(uimsg),
-						"Show passphrase",
+						"&Show passphrase",
 						pvar->ts->UILanguageFile);
 			AppendMenu(hMenu, MF_ENABLED | MF_STRING | (ShowPassPhrase ? MFS_CHECKED : 0), 4, uimsg);
 			RECT rect;
@@ -1137,7 +1137,7 @@ canceled:
 			HMENU hMenu= CreatePopupMenu();
 			GetI18nStrT("TTSSH", "DLG_AUTH_PASTE_WINDOWS_USERNAME",
 						uimsg, _countof(uimsg),
-						"Paste Windows username",
+						"Paste &Windows username",
 						pvar->ts->UILanguageFile);
 			AppendMenu(hMenu, MF_ENABLED | MF_STRING, 1, uimsg);
 			RECT rect;
@@ -1334,7 +1334,7 @@ static void init_TIS_dlg(PTInstVar pvar, HWND dlg)
 	SetDlgItemText(dlg, IDCANCEL, pvar->ts->UIMsg);
 
 	init_auth_machine_banner(pvar, dlg);
-	init_password_control(pvar, dlg, IDC_SSHPASSWORD);
+	init_password_control(pvar, dlg, IDC_SSHPASSWORD, NULL);
 
 	if (pvar->auth_state.TIS_prompt != NULL) {
 		if (strlen(pvar->auth_state.TIS_prompt) > 10000) {
@@ -1535,6 +1535,10 @@ static void init_default_auth_dlg(PTInstVar pvar, HWND dlg)
 		CheckDlgButton(dlg, IDC_CHECKAUTH, TRUE);
 	}
 
+	if (pvar->session_settings.DefaultUserName[0] == 0) {
+		// 空なので「入力しない」にしておく
+		pvar->session_settings.DefaultUserType = 0;
+	}
 	id = pvar->settings.DefaultUserType == 1 ? IDC_SSH_DEFAULTUSERNAME :
 		pvar->settings.DefaultUserType == 2 ? IDC_SSH_WINDOWS_USERNAME :
 		IDC_SSH_NO_USERNAME;

@@ -82,6 +82,7 @@ static int auth_types_to_control_IDs[] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, IDC_SSHUSEPAGEANT, -1
 };
 static BOOL UseControlChar = TRUE;
+static BOOL ShowPassPhrase = FALSE;
 
 typedef struct {
 	WNDPROC ProcOrg;
@@ -177,7 +178,7 @@ static void set_auth_options_status(HWND dlg, int controlID)
 
 	EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORDCAPTION), (!TIS_enabled && !PAGEANT_enabled));
 	EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORD), (!TIS_enabled && !PAGEANT_enabled));
-	EnableWindow(GetDlgItem(dlg, IDC_FROM_CLIPBOARD), (!TIS_enabled && !PAGEANT_enabled));
+	EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORD_OPTION), (!TIS_enabled && !PAGEANT_enabled));
 
 	for (i = IDC_CHOOSERSAFILE; i <= IDC_RSAFILENAME; i++) {
 		EnableWindow(GetDlgItem(dlg, i), RSA_enabled);
@@ -255,12 +256,7 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 		{ IDC_SSHAUTHBANNER, "DLG_AUTH_BANNER" },
 		{ IDC_SSHAUTHBANNER2, "DLG_AUTH_BANNER2" },
 		{ IDC_SSHUSERNAMELABEL, "DLG_AUTH_USERNAME" },
-		{ IDC_FROM_GETUSERNAME, "DLG_AUTH_PASTE_WINDOWS_USERNAME" },
 		{ IDC_SSHPASSWORDCAPTION, "DLG_AUTH_PASSWORD" },
-		{ IDC_FROM_CLIPBOARD, "DLG_AUTH_PASTE_CLIPBOARD" },
-		{ IDC_CLEAR_CLIPBOARD, "DLG_AUTH_CLEAR_CLIPBOARD" },
-		{ IDC_USE_CONTROL_CHARACTER, "DLG_AUTH_USE_CONTORL_CHARACTERS" },
-		{ IDC_SHOW_PASSPHRASE, "DLG_AUTH_SHOW_PASSPHRASE" },
 		{ IDC_REMEMBER_PASSWORD, "DLG_AUTH_REMEMBER_PASSWORD" },
 		{ IDC_FORWARD_AGENT, "DLG_AUTH_FWDAGENT" },
 		{ IDC_SSHUSEPASSWORD, "DLG_AUTH_METHOD_PASSWORD" },
@@ -314,14 +310,14 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 	if (pvar->auth_state.user != NULL) {
 		SetDlgItemText(dlg, IDC_SSHUSERNAME, pvar->auth_state.user);
 		EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAME), FALSE);
-		EnableWindow(GetDlgItem(dlg, IDC_FROM_GETUSERNAME), FALSE);
+		EnableWindow(GetDlgItem(dlg, IDC_USERNAME_OPTION), FALSE);
 		EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAMELABEL), FALSE);
 	}
 	else if (strlen(pvar->ssh2_username) > 0) {
 		SetDlgItemText(dlg, IDC_SSHUSERNAME, pvar->ssh2_username);
 		if (pvar->ssh2_autologin == 1) {
 			EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAME), FALSE);
-			EnableWindow(GetDlgItem(dlg, IDC_FROM_GETUSERNAME), FALSE);
+			EnableWindow(GetDlgItem(dlg, IDC_USERNAME_OPTION), FALSE);
 			EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAMELABEL), FALSE);
 		}
 	}
@@ -360,7 +356,7 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 		if (pvar->ssh2_autologin == 1) {
 			EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORD), FALSE);
 			EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORDCAPTION), FALSE);
-			EnableWindow(GetDlgItem(dlg, IDC_FROM_CLIPBOARD), FALSE);
+			EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORD_OPTION), FALSE);
 		}
 	}
 
@@ -387,14 +383,14 @@ static void init_auth_dlg(PTInstVar pvar, HWND dlg)
 	} else if (pvar->ssh2_authmethod == SSH_AUTH_TIS) {
 		CheckRadioButton(dlg, IDC_SSHUSEPASSWORD, MAX_AUTH_CONTROL, IDC_SSHUSETIS);
 		EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORD), FALSE);
-		EnableWindow(GetDlgItem(dlg, IDC_FROM_CLIPBOARD), FALSE);
+		EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORD_OPTION), FALSE);
 		SetDlgItemText(dlg, IDC_SSHPASSWORD, "");
 
 	// /auth=pageant を追加
 	} else if (pvar->ssh2_authmethod == SSH_AUTH_PAGEANT) {
 		CheckRadioButton(dlg, IDC_SSHUSEPASSWORD, MAX_AUTH_CONTROL, IDC_SSHUSEPAGEANT);
 		EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORD), FALSE);
-		EnableWindow(GetDlgItem(dlg, IDC_FROM_CLIPBOARD), FALSE);
+		EnableWindow(GetDlgItem(dlg, IDC_SSHPASSWORD_OPTION), FALSE);
 		SetDlgItemText(dlg, IDC_SSHPASSWORD, "");
 
 	} else {
@@ -845,8 +841,6 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 		}
 #endif
 		UseControlChar = TRUE;
-		CheckDlgButton(dlg, IDC_USE_CONTROL_CHARACTER, UseControlChar ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(dlg, IDC_CLEAR_CLIPBOARD, BST_CHECKED);
 
 		// SSH2 autologinが有効の場合は、タイマを仕掛ける。 (2004.12.1 yutaka)
 		if (pvar->ssh2_autologin == 1) {
@@ -930,7 +924,7 @@ static BOOL CALLBACK auth_dlg_proc(HWND dlg, UINT msg, WPARAM wParam,
 
 					// ユーザ名を変更させない
 					EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAME), FALSE);
-					EnableWindow(GetDlgItem(dlg, IDC_FROM_GETUSERNAME), FALSE);
+					EnableWindow(GetDlgItem(dlg, IDC_USERNAME_OPTION), FALSE);
 
 					// 認証メソッド none を送る
 					do_SSH2_userauth(pvar);
@@ -1024,7 +1018,7 @@ canceled:
 
 					// ユーザ名を変更させない
 					EnableWindow(GetDlgItem(dlg, IDC_SSHUSERNAME), FALSE);
-					EnableWindow(GetDlgItem(dlg, IDC_FROM_GETUSERNAME), FALSE);
+					EnableWindow(GetDlgItem(dlg, IDC_USERNAME_OPTION), FALSE);
 
 					// 認証メソッド none を送る
 					do_SSH2_userauth(pvar);
@@ -1055,65 +1049,118 @@ canceled:
 			pvar->session_settings.ForwardAgent = IsDlgButtonChecked(dlg, IDC_FORWARD_AGENT);
 			return TRUE;
 
-		case IDC_FROM_CLIPBOARD: {
-			char *clipboard = GetClipboardTextA(dlg, IsDlgButtonChecked(dlg, IDC_CLEAR_CLIPBOARD) != BST_UNCHECKED);
-			if (clipboard != NULL) {
-				SetDlgItemTextA(dlg, IDC_SSHPASSWORD, clipboard);
-				free(clipboard);
-				SendDlgItemMessage(dlg, IDC_SSHPASSWORD, EM_SETSEL, 0, -1);
-				SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDC_SSHPASSWORD), TRUE);
-				return FALSE;
-			}
-			return TRUE;
-		}
-
-		case IDC_SHOW_PASSPHRASE: {
-			// 伏せ字 on/off を切り替える
-			HWND hWnd = GetDlgItem(dlg, IDC_SSHPASSWORD);
-			static wchar_t password_char;
-			if (password_char == 0) {
-				wchar_t c = (wchar_t)SendMessage(hWnd, EM_GETPASSWORDCHAR, 0, 0);
-				password_char = c;
-			}
-			if (IsDlgButtonChecked(dlg, IDC_SHOW_PASSPHRASE) != BST_UNCHECKED) {
-				SendMessage(hWnd, EM_SETPASSWORDCHAR, 0, 0);
-			} else {
-#if !defined(UNICODE)
-				if (password_char < 0x100) {
-					SendMessageA(hWnd, EM_SETPASSWORDCHAR, (WPARAM)password_char, 0);
-				} else {
-					// TODO W系直呼び ↓うまくいかない
-					//SendMessageW(hWnd, EM_SETPASSWORDCHAR, (WPARAM)password_char, 0);
-					SendMessageA(hWnd, EM_SETPASSWORDCHAR, (WPARAM)'*', 0);
+		case IDC_SSHPASSWORD_OPTION: {
+			TCHAR uimsg[MAX_UIMSG];
+			HMENU hMenu= CreatePopupMenu();
+			GetI18nStrT("TTSSH", "DLG_AUTH_PASTE_CLIPBOARD",
+						uimsg, _countof(uimsg),
+						"Paste from clipboard",
+						pvar->ts->UILanguageFile);
+			AppendMenu(hMenu, MF_ENABLED | MF_STRING, 1, uimsg);
+			GetI18nStrT("ttssh", "DLG_AUTH_CLEAR_CLIPBOARD",
+						uimsg, _countof(uimsg),
+						"and clear clipboard",
+						pvar->ts->UILanguageFile);
+			AppendMenu(hMenu, MF_ENABLED | MF_STRING, 2, uimsg);
+			GetI18nStrT("ttssh", "DLG_AUTH_USE_CONTORL_CHARACTERS",
+						uimsg, _countof(uimsg),
+						"Use control characters",
+						pvar->ts->UILanguageFile);
+			AppendMenu(hMenu, MF_ENABLED | MF_STRING  | (UseControlChar ? MFS_CHECKED : 0), 3, uimsg);
+			GetI18nStrT("ttssh", "DLG_AUTH_SHOW_PASSPHRASE",
+						uimsg, _countof(uimsg),
+						"Show passphrase",
+						pvar->ts->UILanguageFile);
+			AppendMenu(hMenu, MF_ENABLED | MF_STRING | (ShowPassPhrase ? MFS_CHECKED : 0), 4, uimsg);
+			RECT rect;
+			HWND hWndButton = GetDlgItem(dlg, IDC_SSHPASSWORD_OPTION);
+			GetWindowRect(hWndButton, &rect);
+			int result = TrackPopupMenu(hMenu, TPM_RETURNCMD, rect.left, rect.bottom, 0 , hWndButton, NULL);
+			DestroyMenu(hMenu);
+			switch(result) {
+			case 1:
+			case 2: {
+				// クリップボードからペースト
+				BOOL clear_clipboard = result == 2;
+				char *clipboard = GetClipboardTextA(dlg, clear_clipboard);
+				if (clipboard != NULL) {
+					SetDlgItemTextA(dlg, IDC_SSHPASSWORD, clipboard);
+					free(clipboard);
+					SendDlgItemMessage(dlg, IDC_SSHPASSWORD, EM_SETSEL, 0, -1);
+					SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDC_SSHPASSWORD), TRUE);
+					return FALSE;
 				}
+				return TRUE;
+			}
+			case 3:
+				// 制御コード使用/未使用
+				UseControlChar = !UseControlChar;
+				break;
+			case 4:
+				// パスフレーズ表示/非表示
+				ShowPassPhrase = !ShowPassPhrase;
+				{
+					// 伏せ字 on/off を切り替える
+					HWND hWnd = GetDlgItem(dlg, IDC_SSHPASSWORD);
+					static wchar_t password_char;
+					if (password_char == 0) {
+						wchar_t c = (wchar_t)SendMessage(hWnd, EM_GETPASSWORDCHAR, 0, 0);
+						password_char = c;
+					}
+					if (ShowPassPhrase) {
+						SendMessage(hWnd, EM_SETPASSWORDCHAR, 0, 0);
+					} else {
+#if !defined(UNICODE)
+						if (password_char < 0x100) {
+							SendMessageA(hWnd, EM_SETPASSWORDCHAR, (WPARAM)password_char, 0);
+						} else {
+							// TODO W系直呼び ↓うまくいかない
+							//SendMessageW(hWnd, EM_SETPASSWORDCHAR, (WPARAM)password_char, 0);
+							SendMessageA(hWnd, EM_SETPASSWORDCHAR, (WPARAM)'*', 0);
+						}
 #else
-				SendMessageW(hWnd, EM_SETPASSWORDCHAR, (WPARAM)password_char, 0);
+						SendMessageW(hWnd, EM_SETPASSWORDCHAR, (WPARAM)password_char, 0);
 #endif
+					}
+					//InvalidateRect(hWnd, NULL, TRUE);
+					SendDlgItemMessage(dlg, IDC_SSHPASSWORD, EM_SETSEL, 0, -1);
+					SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDC_SSHPASSWORD), TRUE);
+					return TRUE;
+				}
+				break;
 			}
-			//InvalidateRect(hWnd, NULL, TRUE);
-			SendDlgItemMessage(dlg, IDC_SSHPASSWORD, EM_SETSEL, 0, -1);
-			SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDC_SSHPASSWORD), TRUE);
-			return TRUE;
-		}
-
-		case IDC_FROM_GETUSERNAME: {
-			TCHAR user_name[UNLEN+1];
-			DWORD len = _countof(user_name);
-			BOOL r = GetUserName(user_name, &len);
-			if (r != 0) {
-				SetDlgItemText(dlg, IDC_SSHUSERNAME, user_name);
-				SendDlgItemMessage(dlg, IDC_SSHUSERNAME, EM_SETSEL, 0, -1);
-				SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDC_SSHUSERNAME), TRUE);
-			}
-			return TRUE;
-		}
-
-		case IDC_USE_CONTROL_CHARACTER: {
-			UseControlChar =
-				(IsDlgButtonChecked(dlg, IDC_USE_CONTROL_CHARACTER) != BST_UNCHECKED) ?
-				TRUE : FALSE;
 			break;
 		}
+
+		case IDC_USERNAME_OPTION: {
+			TCHAR uimsg[MAX_UIMSG];
+			HMENU hMenu= CreatePopupMenu();
+			GetI18nStrT("TTSSH", "DLG_AUTH_PASTE_WINDOWS_USERNAME",
+						uimsg, _countof(uimsg),
+						"Paste Windows username",
+						pvar->ts->UILanguageFile);
+			AppendMenu(hMenu, MF_ENABLED | MF_STRING, 1, uimsg);
+			RECT rect;
+			HWND hWndButton = GetDlgItem(dlg, IDC_USERNAME_OPTION);
+			GetWindowRect(hWndButton, &rect);
+			int result = TrackPopupMenu(hMenu, TPM_RETURNCMD, rect.left, rect.bottom, 0 , hWndButton, NULL);
+			DestroyMenu(hMenu);
+			switch (result) {
+			case 1: {
+				TCHAR user_name[UNLEN+1];
+				DWORD len = _countof(user_name);
+				BOOL r = GetUserName(user_name, &len);
+				if (r != 0) {
+					SetDlgItemText(dlg, IDC_SSHUSERNAME, user_name);
+					SendDlgItemMessage(dlg, IDC_SSHUSERNAME, EM_SETSEL, 0, -1);
+					SendMessage(dlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(dlg, IDC_SSHUSERNAME), TRUE);
+				}
+				break;
+			}
+			}
+			return TRUE;
+		}
+
 		default:
 			return FALSE;
 		}

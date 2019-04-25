@@ -224,17 +224,13 @@
 #define IDC_SSHDYNFROMPORT              1228
 #define IDC_SSHFWDLOCALDYNAMIC_LISTEN   1229
 #define IDC_SSHDYNLISTENADDR            1230
-#define IDC_FROM_CLIPBOARD              1231
-#define IDC_SHOW_PASSPHRASE             1232
-#define IDC_CLEAR_CLIPBOARD             1233
-#define IDC_USE_CONTROL_CHARACTER       1234
+#define IDC_SSHPASSWORD_OPTION          1231
+#define IDC_USERNAME_OPTION             1232
 #define IDC_HOSTRSAFILENAMELABEL        1235
 #define IDC_RSAFILENAMELABEL            1236
 #define IDC_SSH_NO_USERNAME             1237
 #define IDC_SSH_DEFAULTUSERNAME         1238
 #define IDC_SSH_WINDOWS_USERNAME        1239
-#define IDC_FROM_GETUSERNAME            1240
-#define IDC_RSAFILENAMELABEL2           1241
 #define IDC_SSH_WINDOWS_USERNAME_TEXT   1241
 
 // Next default values for new objects

@@ -72,8 +72,8 @@ private:
                     event = 0;
                 }
             }
-            operator int()const {
-                return window == NULL && message == 0 && event == 0 ? 0 : (int) window;
+            operator HWND() const {
+                return window == NULL && message == 0 && event == 0 ? 0 : window;
             }
         };
         Hashtable<SOCKET, AsyncSelectInfo> table;
@@ -715,9 +715,8 @@ private:
         Window conn;
         Window erro;
         Window log;
-//      HFONT DlgFont;
     protected:
-        virtual bool dispatch(int message, int wParam, long lParam) {
+        virtual bool dispatch(UINT message, WPARAM wParam, LPARAM lParam) {
             if (message == WM_COMMAND && wParam == MAKEWPARAM(IDC_REFER, BN_CLICKED)) {
                 char buffer[1024];
                 char uimsg[MAX_UIMSG];
@@ -890,7 +889,7 @@ private:
         EditBoxCtrl  pass;
         bool lock;
     protected:
-        virtual bool dispatch(int message, int wParam, long lParam) {
+        virtual bool dispatch(UINT message, WPARAM wParam, LPARAM lParam) {
             if (message == WM_COMMAND) {
                 switch (wParam) {
                 case MAKEWPARAM(IDC_OPTIONS, BN_CLICKED):

@@ -2329,6 +2329,7 @@ static void client_global_hostkeys_private_confirm(PTInstVar pvar, int type, u_i
 	buffer_t *bsig = NULL;
 	char *cp, *sig;
 	size_t i, ndone, siglen;
+	int siglen_i;
 	int ret;
 
 	// SSH2 packet format:
@@ -2384,7 +2385,8 @@ static void client_global_hostkeys_private_confirm(PTInstVar pvar, int type, u_i
 		free(blob);
 		blob = NULL;
 
-		sig = buffer_get_string_msg(bsig, &siglen);
+		sig = buffer_get_string_msg(bsig, &siglen_i);
+		siglen = siglen_i;
 		// Verify signature
 		ret = key_verify(ctx->keys[i], sig, siglen, buffer_ptr(b), buffer_len(b));
 		free(sig);

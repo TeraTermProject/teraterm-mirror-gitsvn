@@ -70,6 +70,7 @@ typedef struct SendMemTag {
 	DWORD delay_per_line;  // (ms)
 	DWORD delay_per_char;
 	DWORD delay_per_sendsize;
+	DWORD delay_tick;
 	size_t send_size_max;
 	SendMemDelayType delay_type;
 	HWND hWnd;	 // タイマーを受けるwindow
@@ -266,8 +267,7 @@ void SendMemContinuously(void)
 	}
 
 	if (p->waited) {
-		const DWORD delay = p->delay_per_line > 0 ? p->delay_per_line : p->delay_per_char;
-		if (GetTickCount() - p->last_send_tick < delay) {
+		if (GetTickCount() - p->last_send_tick < p->delay_tick) {
 			// ウエイトする
 			return;
 		}
@@ -295,12 +295,10 @@ void SendMemContinuously(void)
 
 	// 送信長
 	BOOL need_delay = FALSE;
-	DWORD delay_tick = 0;
 	size_t send_len;
 	if (p->delay_per_char > 0) {
 		// 1キャラクタ送信
 		need_delay = TRUE;
-		delay_tick = p->delay_per_char;
 		if (p->type == SendMemTypeBinary) {
 			send_len = 1;
 		}
@@ -311,7 +309,6 @@ void SendMemContinuously(void)
 	else if (p->delay_per_line > 0) {
 		// 1ライン送信
 		need_delay = TRUE;
-		delay_tick = p->delay_per_line;
 
 		// 1行取り出し(改行コードは 0x0a に正規化されている)
 		const wchar_t *line_top = (wchar_t *)&p->send_ptr[p->send_index];
@@ -345,7 +342,6 @@ void SendMemContinuously(void)
 			// 送信サイズ上限
 			if (send_len > p->send_size_max) {
 				need_delay = TRUE;
-				delay_tick = p->delay_per_sendsize;
 				send_len = p->send_size_max;
 			}
 		}
@@ -382,7 +378,7 @@ void SendMemContinuously(void)
 		p->waited = TRUE;
 		p->last_send_tick = GetTickCount();
 		// タイマーはidleを動作させるために使用している
-		SetTimer(p->hWnd, p->timer_id, delay_tick, NULL);
+		SetTimer(p->hWnd, p->timer_id, p->delay_tick, NULL);
 	}
 }
 
@@ -545,6 +541,7 @@ void SendMemInitDelay(SendMem *sm, SendMemDelayType type, DWORD delay_tick, size
 		sm->send_size_max = send_max;
 		break;
 	}
+	sm->delay_tick = delay_tick;
 }
 
 // セットするとダイアログが出る

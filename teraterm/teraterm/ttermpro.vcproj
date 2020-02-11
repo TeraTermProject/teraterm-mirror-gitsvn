@@ -237,6 +237,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\sendfiledlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath="tekwin.cpp"
 				>
 			</File>
@@ -428,6 +432,10 @@
 			</File>
 			<File
 				RelativePath=".\keyboard.h"
+				>
+			</File>
+			<File
+				RelativePath=".\sendfiledlg.h"
 				>
 			</File>
 			<File

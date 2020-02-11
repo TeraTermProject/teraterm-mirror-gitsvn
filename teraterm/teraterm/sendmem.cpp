@@ -54,7 +54,7 @@
 
 typedef enum {
 	SendMemTypeTextLF,		// wchar_t 0x0a
-	SendMemTypeTextCRLF,	// wchar_t 0x0d + 0x0a
+//	SendMemTypeTextCRLF,	// wchar_t 0x0d + 0x0a
 	SendMemTypeBinary,
 } SendMemType;
 
@@ -69,6 +69,9 @@ typedef struct SendMemTag {
 	BOOL send_enable;
 	DWORD delay_per_line;  // (ms)
 	DWORD delay_per_char;
+	DWORD delay_per_sendsize;
+	size_t send_size_max;
+	SendMemDelayType delay_type;
 	HWND hWnd;	 // タイマーを受けるwindow
 	int timer_id;  // タイマーID
 	char *UILanguageFile;
@@ -139,6 +142,7 @@ static wchar_t *wcsnchr(const wchar_t *str, size_t len, wchar_t chr)
 static void EndPaste()
 {
 	sendmem_work_t *p = sendmem_work;
+	free((void *)p->send_ptr);
 	p->send_ptr = NULL;
 
 	TalkStatus = IdTalkKeyb;
@@ -291,10 +295,12 @@ void SendMemContinuously(void)
 
 	// 送信長
 	BOOL need_delay = FALSE;
+	DWORD delay_tick = 0;
 	size_t send_len;
 	if (p->delay_per_char > 0) {
 		// 1キャラクタ送信
 		need_delay = TRUE;
+		delay_tick = p->delay_per_char;
 		if (p->type == SendMemTypeBinary) {
 			send_len = 1;
 		}
@@ -305,6 +311,7 @@ void SendMemContinuously(void)
 	else if (p->delay_per_line > 0) {
 		// 1ライン送信
 		need_delay = TRUE;
+		delay_tick = p->delay_per_line;
 
 		// 1行取り出し(改行コードは 0x0a に正規化されている)
 		const wchar_t *line_top = (wchar_t *)&p->send_ptr[p->send_index];
@@ -326,10 +333,21 @@ void SendMemContinuously(void)
 		}
 	}
 	else {
-		// 全力送信
 		send_len = p->send_left;
-		if (buff_len < send_len) {
-			send_len = buff_len;
+		if (p->send_size_max == 0) {
+			// 全力送信
+			send_len = p->send_left;
+			if (buff_len < send_len) {
+				send_len = buff_len;
+			}
+		}
+		else {
+			// 送信サイズ上限
+			if (send_len > p->send_size_max) {
+				need_delay = TRUE;
+				delay_tick = p->delay_per_sendsize;
+				send_len = p->send_size_max;
+			}
 		}
 	}
 
@@ -364,8 +382,7 @@ void SendMemContinuously(void)
 		p->waited = TRUE;
 		p->last_send_tick = GetTickCount();
 		// タイマーはidleを動作させるために使用している
-		const DWORD delay = p->delay_per_line > 0 ? p->delay_per_line : p->delay_per_char;
-		SetTimer(p->hWnd, p->timer_id, delay, NULL);
+		SetTimer(p->hWnd, p->timer_id, delay_tick, NULL);
 	}
 }
 
@@ -433,8 +450,11 @@ static SendMem *SendMemInit_()
 
 	p->type = SendMemTypeBinary;
 	p->local_echo_enable = FALSE;
+	p->delay_type = SENDMEM_DELAYTYPE_NO_DELAY;
+	p->send_size_max = 0;
 	p->delay_per_char = 0;  // (ms)
 	p->delay_per_line = 0;  // (ms)
+	p->delay_per_sendsize = 0;
 	p->cv_ = NULL;
 	p->hWnd = HVTWin;		// delay時に使用するタイマー用
 	p->timer_id = IdPasteDelayTimer;
@@ -497,10 +517,34 @@ void SendMemInitEcho(SendMem *sm, BOOL echo)
 	sm->local_echo_enable = echo;
 }
 
-void SendMemInitDelay(SendMem* sm, DWORD per_line, DWORD per_char)
+void SendMemInitDelay(SendMem *sm, SendMemDelayType type, DWORD delay_tick, size_t send_max)
 {
-	sm->delay_per_char = per_char;	// (ms)
-	sm->delay_per_line = per_line;
+	switch (type) {
+	case SENDMEM_DELAYTYPE_NO_DELAY:
+	default:
+		sm->delay_per_char = 0;
+		sm->delay_per_line = 0;
+		sm->send_size_max = 0;
+		break;
+	case SENDMEM_DELAYTYPE_PER_CHAR:
+		sm->delay_per_char = delay_tick;
+		sm->delay_per_line = 0;
+		sm->delay_per_sendsize = 0;
+		sm->send_size_max = 0;
+		break;
+	case SENDMEM_DELAYTYPE_PER_LINE:
+		sm->delay_per_char = 0;
+		sm->delay_per_line = delay_tick;
+		sm->delay_per_sendsize = 0;
+		sm->send_size_max = 0;
+		break;
+	case SENDMEM_DELAYTYPE_PER_SENDSIZE:
+		sm->delay_per_char = 0;
+		sm->delay_per_line = 0;
+		sm->delay_per_sendsize = delay_tick;
+		sm->send_size_max = send_max;
+		break;
+	}
 }
 
 // セットするとダイアログが出る
@@ -570,7 +614,7 @@ BOOL SendMemSendFile(const wchar_t *filename, BOOL binary)
 	return TRUE;
 }
 #else
-BOOL SendMemSendFile(const wchar_t *filename, BOOL binary)
+BOOL SendMemSendFile(const wchar_t *filename, BOOL binary, SendMemDelayType delay_type, DWORD delay_tick, size_t send_max)
 {
 	SendMem *sm;
 	if (!binary) {
@@ -592,6 +636,7 @@ BOOL SendMemSendFile(const wchar_t *filename, BOOL binary)
 	SendMemInitDialog(sm, hInst, HVTWin, ts.UILanguageFile);
 	SendMemInitDialogCaption(sm, L"send file");			// title
 	SendMemInitDialogFilename(sm, filename);
+	SendMemInitDelay(sm, delay_type, delay_tick, send_max);
 	SendMemStart(sm);
 	return TRUE;
 }

@@ -95,6 +95,8 @@ add_executable(
   debug_pp.cpp
   debug_pp.h
   debug_pp.rc
+  sendfiledlg.cpp
+  sendfiledlg.h
   )
 
 target_sources(

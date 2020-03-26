@@ -1277,19 +1277,17 @@ wc::wc()
 	tstr_ = NULL;
 }
 
-#if 0
-tc::tc(const char *strA)
+wc::wc(const char *strA)
 {
 	tstr_ = NULL;
 	assign(strA, CP_ACP);
 }
 
-tc::tc(const char *strA, int code_page)
+wc::wc(const char *strA, int code_page)
 {
 	tstr_ = NULL;
 	assign(strA, code_page);
 }
-#endif
 
 wc::wc(const wchar_t *strW)
 {
@@ -1319,32 +1317,30 @@ wc::~wc()
 	}
 }
 
-#if 0
-tc& tc::operator=(const char *strA)
+wc& wc::operator=(const char *strA)
 {
 	assign(strA, CP_ACP);
 	return *this;
 }
 
-tc& tc::operator=(const wchar_t *strW)
+wc& wc::operator=(const wchar_t *strW)
 {
 	assign(strW);
 	return *this;
 }
 
-tc &tc::operator=(const tc &obj)
+wc &wc::operator=(const wc &obj)
 {
 	copy(obj);
 	return *this;
 }
 
 #if defined(MOVE_CONSTRUCTOR_ENABLE)
-tc& tc::operator=(tc &&obj) noexcept
+wc& wc::operator=(wc &&obj) noexcept
 {
 	move(obj);
 	return *this;
 }
-#endif
 #endif
 
 wc wc::fromUtf8(const char *strU8)

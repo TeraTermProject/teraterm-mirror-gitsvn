@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 1994-1998 T. Teranishi
- * (C) 2007-2019 TeraTerm Project
+ * (C) 2005-2019 TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,28 +27,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* TTMACRO.EXE, error dialog box */
+/* TTMACRO.EXE, Tera Term Language interpreter */
 
-// CErrDlg dialog
-#include "tmfc.h"
-#include "macrodlgbase.h"
+#pragma once
+#define IdMsgBox 1
+#define IdYesNoBox 2
+#define IdStatusBox 3
+#define IdListBox 4
+#define LISTBOX_ITEM_NUM 10
 
-class CErrDlg : public CMacroDlgBase
-{
-public:
-	CErrDlg(const char *Msg, const char *Line, int x, int y, int lineno, int start, int end, const char *FileName);
-	INT_PTR DoModal(HINSTANCE hInst, HWND hWndParent);
-
-private:
-	enum { IDD = IDD_ERRDLG };
-
-	const TCHAR *MsgStr;
-	const TCHAR *LineStr;
-	int LineNo;
-	int StartPos, EndPos;
-	const TCHAR *MacroFileName;
-
-	virtual BOOL OnInitDialog();
-	BOOL OnCommand(WPARAM wp, LPARAM lp);
-	void OnBnClickedMacroerrhelp();
-};
+WORD TTLClipb2Var();
+WORD TTLVar2Clipb();
+WORD TTLGetPassword();
+int MessageCommand(int BoxId, LPWORD Err);
+WORD TTLDirnameBox();
+WORD TTLListBox();
+WORD TTLMessageBox();
+WORD TTLInputBox(BOOL Paswd);
+WORD TTLFilenameBox();

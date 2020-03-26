@@ -482,10 +482,10 @@ WORD TTLGetPassword()
 							Temp,_countof(Temp), tc::fromUtf8(Str));
 	if (Temp[0]==0) // password not exist
 	{
-#if defined(UNICODE)
-		TCHAR input_string[MaxStrLen];
+#if 1 //defined(UNICODE)
+		wchar_t input_string[MaxStrLen];
 		size_t Temp2_len = sizeof(Temp2);
-		OpenInpDlg(input_string, tc::fromUtf8(Str2), _T("Enter password"), _T(""), TRUE);
+		OpenInpDlg(input_string, wc::fromUtf8(Str2), L"Enter password", L"", TRUE);
 		WideCharToUTF8(input_string, NULL, Temp2, &Temp2_len);
 #else
 		OpenInpDlg(Temp2, Str2, _T("Enter password"), _T(""), TRUE);
@@ -551,9 +551,9 @@ WORD TTLInputBox(BOOL Paswd)
 
 	SetInputStr("");
 	if (CheckVar("inputstr",&ValType,&VarId) && (ValType==TypString)) {
-#if defined(UNICODE)
-		TCHAR input_string[MaxStrLen];
-		OpenInpDlg(input_string,tc::fromUtf8(Str1),tc::fromUtf8(Str2),tc::fromUtf8(Str3),Paswd);
+#if 1 // defined(UNICODE)
+		wchar_t input_string[MaxStrLen];
+		OpenInpDlg(input_string,wc::fromUtf8(Str1),wc::fromUtf8(Str2),wc::fromUtf8(Str3),Paswd);
 		char *output = StrVarPtr(VarId);
 		size_t str_len = MaxStrLen;
 		WideCharToUTF8(input_string, NULL, output, &str_len);

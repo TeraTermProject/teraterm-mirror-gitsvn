@@ -366,14 +366,14 @@ int MessageCommand(int BoxId, LPWORD Err)
 	}
 
 	if (BoxId==IdMsgBox) {
-		ret = OpenMsgDlg(tc::fromUtf8(Str1),tc::fromUtf8(Str2),FALSE);
+		ret = OpenMsgDlg(wc::fromUtf8(Str1),wc::fromUtf8(Str2),FALSE);
 		// メッセージボックスをキャンセルすると、マクロの終了とする。
 		// (2008.8.5 yutaka)
 		if (ret == IDCANCEL) {
 			TTLStatus = IdTTLEnd;
 		}
 	} else if (BoxId==IdYesNoBox) {
-		ret = OpenMsgDlg(tc::fromUtf8(Str1),tc::fromUtf8(Str2),TRUE);
+		ret = OpenMsgDlg(wc::fromUtf8(Str1),wc::fromUtf8(Str2),TRUE);
 		// メッセージボックスをキャンセルすると、マクロの終了とする。
 		// (2008.8.6 yutaka)
 		if (ret == IDCLOSE) {
@@ -400,7 +400,7 @@ int MessageCommand(int BoxId, LPWORD Err)
 			sel = 0;
 		}
 
-		TCHAR **s = (TCHAR **)calloc(ary_size + 1, sizeof(TCHAR *));
+		wchar_t **s = (wchar_t **)calloc(ary_size + 1, sizeof(wchar_t *));
 		if (s == NULL) {
 			*Err = ErrFewMemory;
 			return -1;
@@ -409,7 +409,7 @@ int MessageCommand(int BoxId, LPWORD Err)
 			TVarId VarId2;
 			VarId2 = GetStrVarFromArray(VarId, i, Err);
 			if (*Err!=0) return -1;
-			s[i] = ToTcharU8(StrVarPtr(VarId2));
+			s[i] = ToWcharU8(StrVarPtr(VarId2));
 		}
 		if (s[0] == NULL) {
 			*Err = ErrSyntax;
@@ -420,7 +420,7 @@ int MessageCommand(int BoxId, LPWORD Err)
 		//   0以上: 選択項目
 		//   -1: キャンセル
 		//	 -2: close
-		ret = OpenListDlg(tc::fromUtf8(Str1), tc::fromUtf8(Str2), s, sel);
+		ret = OpenListDlg(wc::fromUtf8(Str1), wc::fromUtf8(Str2), s, sel);
 
 		for (i = 0 ; i < ary_size ; i++) {
 			free((void *)s[i]);

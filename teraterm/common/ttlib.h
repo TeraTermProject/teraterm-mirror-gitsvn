@@ -146,6 +146,9 @@ enum serial_port_conf {
 	COM_FLOWCTRL,
 };
 
+/*
+ *	ttlib_static
+ */
 typedef struct {
 	const char *section;			// セクション名
 	const char *title_key;			// タイトル(NULLのとき、title_default を常に使用)
@@ -156,6 +159,8 @@ typedef struct {
 
 int TTMessageBoxW(HWND hWnd, const TTMessageBoxInfoW *info, UINT uType, const char *UILanguageFile, ...);
 wchar_t *TTGetLangStrW(const char *section, const char *key, const wchar_t *def, const char *UILanguageFile);
+wchar_t *GetClipboardTextW(HWND hWnd, BOOL empty);
+char *GetClipboardTextA(HWND hWnd, BOOL empty);
 
 #ifdef __cplusplus
 }

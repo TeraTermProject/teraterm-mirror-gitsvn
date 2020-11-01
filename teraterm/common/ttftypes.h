@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 1994-1998 T. Teranishi
- * (C) 2007-2017 TeraTerm Project
+ * (C) 2007-2020 TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,6 +89,7 @@
 #define TitQVRcv    "Quick-VAN Receive"
 #define TitQVSend   "Quick-VAN Send"
 
+#if 0
 typedef struct {
   HWND HMainWin;
   HWND HWin;
@@ -137,6 +138,7 @@ typedef struct {
   HANDLE reserve_6;
 } TFileVar;
 typedef TFileVar far *PFileVar;
+#endif
 
 typedef struct {
 	int MAXL;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TeraTerm Project
+ * Copyright (C) 2008-2020 TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,15 @@
 // データ転送サイズ。YMODEMでは 128 or 1024 byte をサポートする。
 #define SOH_DATALEN	128
 #define STX_DATALEN	1024
+
+  /* XMODEM states */
+#define XpktSOH 1
+#define XpktBLK 2
+#define XpktBLK2 3
+#define XpktDATA 4
+
+#define XnakNAK 1
+#define XnakC 2
 
 int YRead1Byte(PFileVarProto fv, PYVar yv, PComVar cv, LPBYTE b)
 {

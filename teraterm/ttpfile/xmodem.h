@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 1994-1998 T. Teranishi
- * (C) 2009-2017 TeraTerm Project
+ * (C) 2009-2020 TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,17 +29,17 @@
 
 /* TTFILE.DLL, XMODEM protocol */
 
+#include "filesys_proto.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* prototypes */
-void XInit
-  (PFileVar fv, PXVar xv, PComVar cv, PTTSet ts);
-void XCancel(PFileVar fv, PXVar xv, PComVar cv);
-void XTimeOutProc(PFileVar fv, PXVar xv, PComVar cv);
-BOOL XReadPacket(PFileVar fv, PXVar xv, PComVar cv);
-BOOL XSendPacket(PFileVar fv, PXVar xv, PComVar cv);
+void XInit(PFileVarProto fv, PXVar xv, PComVar cv, PTTSet ts);
+void XCancel(PFileVarProto fv, PXVar xv, PComVar cv);
+void XTimeOutProc(PFileVarProto fv, PXVar xv, PComVar cv);
+BOOL XParse(PFileVarProto fv, PXVar xv, PComVar cv);
 
 #ifdef __cplusplus
 }

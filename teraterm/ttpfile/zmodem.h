@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 1994-1998 T. Teranishi
- * (C) 2009-2017 TeraTerm Project
+ * (C) 2009-2020 TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,10 +34,9 @@ extern "C" {
 #endif
 
 /* prototypes */
-void ZInit
-  (PFileVar fv, PZVar zv, PComVar cv, PTTSet ts);
-void ZTimeOutProc(PFileVar fv, PZVar zv, PComVar cv);
-BOOL ZParse(PFileVar fv, PZVar zv, PComVar cv);
+void ZInit(PFileVarProto fv, PZVar zv, PComVar cv, PTTSet ts);
+void ZTimeOutProc(PFileVarProto fv, PZVar zv, PComVar cv);
+BOOL ZParse(PFileVarProto fv, PZVar zv, PComVar cv);
 void ZCancel(PZVar zv);
 
 #ifdef __cplusplus

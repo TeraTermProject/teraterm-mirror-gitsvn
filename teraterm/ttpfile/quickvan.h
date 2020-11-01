@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 1994-1998 T. Teranishi
- * (C) 2009-2017 TeraTerm Project
+ * (C) 2009-2020 TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,12 +34,11 @@ extern "C" {
 #endif
 
 /* prototypes */
-void QVInit
-  (PFileVar fv, PQVVar qv, PComVar cv, PTTSet ts);
-void QVCancel(PFileVar fv, PQVVar qv, PComVar cv);
-void QVTimeOutProc(PFileVar fv, PQVVar qv, PComVar cv);
-BOOL QVReadPacket(PFileVar fv, PQVVar qv, PComVar cv);
-BOOL QVSendPacket(PFileVar fv, PQVVar qv, PComVar cv);
+void QVInit(PFileVarProto fv, PQVVar qv, PComVar cv, PTTSet ts);
+void QVCancel(PFileVarProto fv, PQVVar qv, PComVar cv);
+void QVTimeOutProc(PFileVarProto fv, PQVVar qv, PComVar cv);
+BOOL QVReadPacket(PFileVarProto fv, PQVVar qv, PComVar cv);
+BOOL QVSendPacket(PFileVarProto fv, PQVVar qv, PComVar cv);
 
 #ifdef __cplusplus
 }

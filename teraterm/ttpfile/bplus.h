@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 1994-1998 T. Teranishi
- * (C) 2007-2017 TeraTerm Project
+ * (C) 2007-2020 TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,10 +34,9 @@ extern "C" {
 #endif
 
 /* prototypes */
-void BPInit
-  (PFileVar fv, PBPVar bv, PComVar cv, PTTSet ts);
-void BPTimeOutProc(PFileVar fv, PBPVar bv, PComVar cv);
-BOOL BPParse(PFileVar fv, PBPVar bv, PComVar cv);
+void BPInit(PFileVarProto fv, PBPVar bv, PComVar cv, PTTSet ts);
+void BPTimeOutProc(PFileVarProto fv, PBPVar bv, PComVar cv);
+BOOL BPParse(PFileVarProto fv, PBPVar bv, PComVar cv);
 void BPCancel(PBPVar bv);
 
 #ifdef __cplusplus

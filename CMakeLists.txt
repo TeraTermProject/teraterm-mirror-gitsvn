@@ -59,6 +59,8 @@ if(MSVC)
 elseif(MINGW)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WIN32_WINNT=${_WIN32_WINNT}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32_WINNT=${_WIN32_WINNT}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__USE_MINGW_ANSI_STDIO=0")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__USE_MINGW_ANSI_STDIO=0")
   set(CMAKE_C_CXX_WARNING_FLAGS "-Wall -Wextra -Wno-unused-parameter -Wno-sign-compare")
   set(CMAKE_C_WARNING_FLAGS "${CMAKE_C_CXX_WARNING_FLAGS}  -Wno-pointer-sign")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNING_FLAGS} -static -ffunction-sections -fdata-sections ${C_ONLY_FLAGS}")
@@ -172,7 +174,7 @@ endif()
 add_subdirectory(installer)
 add_subdirectory(doc)
 add_subdirectory(doc_internal)
-add_subdirectory(tools)
+#add_subdirectory(tools)
 
 ### create buildinfo.txt
 configure_file(

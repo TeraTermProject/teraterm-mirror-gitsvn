@@ -35,16 +35,26 @@
 #define _CRTDBG_MAP_ALLOC
 #endif
 #include <stdlib.h>
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #include <crtdbg.h>
+#endif
 #if (defined(_MSC_VER) && (_MSC_VER >= 1600)) || !defined(_MSC_VER)
 #include <stdint.h>
 #endif
+#include <wchar.h>
+
 #include "codemap.h"
 #include "codeconv.h"
 #include "ttcstd.h"
 
 // cp932変換時、Windows API より Tera Term の変換テーブルを優先する
 //#define PRIORITY_CP932_TABLE
+
+#if defined(__CYGWIN__)
+#define _wcsdup(p1)	wcsdup(p1)
+#define _strdup(p1)	strdup(p1)
+#define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+#endif
 
 /*
  *	見つからない場合は 0 を返す

@@ -31,12 +31,21 @@
 #include <windows.h>
 #include <windns.h>
 #include <assert.h>
+#include <wchar.h>
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <crtdbg.h>
+#endif
 
 #include "compat_win.h"
 #include "compat_windns.h"
 
 #include "dllutil.h"
 #include "codeconv.h"
+
+#if defined(__CYGWIN__)
+#define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+#define _wcsdup(p) wcsdup(p)
+#endif
 
 // for debug
 //#define UNICODE_API_DISABLE	1

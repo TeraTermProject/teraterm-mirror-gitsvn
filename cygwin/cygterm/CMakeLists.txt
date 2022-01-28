@@ -21,6 +21,26 @@ add_executable(
   ${PACKAGE_NAME}
   cygterm.cc
   cygterm.rc
+  cygterm_cfg.cc
+  cygterm_cfg.h
+  )
+
+target_sources(
+  ${PACKAGE_NAME}
+  PRIVATE
+  ../../teraterm/common/ttlib.h
+#  ../../teraterm/common/ttlib_static_cpp.cpp
+  ../../teraterm/common/ttlib_static_dirs.cpp
+  ../../teraterm/common/asprintf.cpp
+  ../../teraterm/common/asprintf.h
+  ../../teraterm/common/win32helper.cpp
+  ../../teraterm/common/win32helper.h
+  ../../teraterm/common/compat_win.cpp
+  ../../teraterm/common/ttknownfolders.c
+  ../../teraterm/common/dllutil.cpp
+  ../../teraterm/common/dllutil.h
+  ../../teraterm/common/codeconv.cpp
+  ../../teraterm/common/codeconv.h
   )
 
 if (MSYS2TERM)
@@ -42,12 +62,26 @@ target_compile_options(
   PRIVATE
   -D_GNU_SOURCE
   -fno-exceptions
+  -Wall -Wextra
+  )
+
+target_include_directories(
+  ${PACKAGE_NAME}
+  PRIVATE
+  ../../teraterm/common
   )
 
 target_link_options(
   ${PACKAGE_NAME}
   PRIVATE
   -mwindows
+  )
+
+target_link_libraries(
+  ${PACKAGE_NAME}
+  PRIVATE
+  shell32
+  ole32
   )
 
 install(

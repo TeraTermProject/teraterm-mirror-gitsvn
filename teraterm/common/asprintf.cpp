@@ -29,7 +29,9 @@
 #include <stdio.h>
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #include <crtdbg.h>
+#endif
 #include <assert.h>
 #include <string.h>
 #include <wchar.h>
@@ -41,6 +43,11 @@
 #define _Printf_format_string_
 #endif
 
+#if defined(__CYGWIN__)
+#define _wcsdup(p)	wcsdup(p)
+#endif
+
+#if !defined(__CYGWIN__)
 /**
  *	領域を確保して、文字列をフォーマットして、ポインタ返す
  *	不要になったら free() すること
@@ -140,6 +147,7 @@ int aswprintf(wchar_t **strp, _Printf_format_string_ const wchar_t *fmt, ...)
 	va_end(ap);
 	return r;
 }
+#endif //!defined(__CYGWIN__)
 
 /**
  *	文字列を連結する

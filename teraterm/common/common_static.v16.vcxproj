@@ -151,6 +151,7 @@
     <ClCompile Include="ttlib_charset.cpp" />
     <ClCompile Include="ttlib_static.c" />
     <ClCompile Include="ttlib_static_cpp.cpp" />
+    <ClCompile Include="ttlib_static_dirs.cpp" />
     <ClCompile Include="win32helper.cpp" />
   </ItemGroup>
   <ItemGroup>

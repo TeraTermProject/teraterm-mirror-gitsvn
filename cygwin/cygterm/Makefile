@@ -39,6 +39,16 @@ ICO = cygterm.ico
 SRC_RC  = cygterm.rc
 ARCHIVE = cygterm+.tar.gz
 
+ifneq (,$(wildcard ../Release/cyglaunch.exe))
+CYGLAUNCH_DIR = ../Release
+else
+ifneq (,$(wildcard ./cyglaunch.exe))
+CYGLAUNCH_DIR = .
+else
+CYGLAUNCH_DIR =
+endif
+endif
+
 .PHONY: all clean install uninstall cygterm_x86_64 cygterm_i686
 
 all : $(EXE)
@@ -69,7 +79,11 @@ uninstall :
 	rm -f $(BINDIR)/$(CFG)
 
 $(ARCHIVE) : $(SRC) $(ICO) $(CFG) README README-j Makefile CMakeLists.txt
-	tar cf - $(SRC) $(ICO) $(CFG) COPYING README README-j Makefile CMakeLists.txt msys2term.cfg | gzip > $(ARCHIVE)
+ifeq (,$(CYGLAUNCH_DIR))
+	tar cf - $(SRC) $(ICO) $(CFG) COPYING README README-j Makefile CMakeLists.txt msys2term.cfg $(CYGLAUNCH) | gzip > $(ARCHIVE)
+else
+	tar cf - $(SRC) $(ICO) $(CFG) COPYING README README-j Makefile CMakeLists.txt msys2term.cfg -C $(CYGLAUNCH_DIR) cyglaunch.exe | gzip > $(ARCHIVE)
+endif
 
 cygterm.o:
   ifeq (0, $(shell nm /usr/lib/crt0.o | grep -c WinMainCRTStartup))

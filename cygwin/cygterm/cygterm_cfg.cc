@@ -33,7 +33,7 @@
 
 #include "cygterm_cfg.h"
 
-// #define DUMP_ENABLE	1
+#define DUMP_ENABLE	1
 
 // additional env vars given to a shell
 //-------------------------------------
@@ -78,7 +78,7 @@ static bool env_add(sh_env_t *envp, const char* name, const char* value)
 				pr_data->envp = e;
 			} else {
 				prev_env->next = e;
-				e->next = prev_env->next;
+				e->next = env_data->next;
 			}
 			free(env_data->name);
 			free(env_data->value);

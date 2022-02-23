@@ -202,13 +202,11 @@ BOOL WINAPI StartTeraTerm(PTTSet ts)
 	ts->ExeDirW = GetExeDirW(hInst);
 
 	// LogDir
-	ts->LogDirW = GetLogDirW();
-	CreateDirectoryW(ts->LogDirW, NULL);
+	ts->LogDirW = GetLogDirW(hInst);
 
 	// HomeDir
 	ts->HomeDirW = GetHomeDirW(hInst);
 	WideCharToACP_t(ts->HomeDirW, ts->HomeDir, _countof(ts->HomeDir));
-	CreateDirectoryW(ts->HomeDirW, NULL);
 	SetCurrentDirectoryW(ts->HomeDirW);		// TODO 必要??
 
 	// TERATERM.INI のフルパス

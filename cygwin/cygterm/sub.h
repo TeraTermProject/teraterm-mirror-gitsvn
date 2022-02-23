@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021- TeraTerm Project
+ * Copyright (C) 2022- TeraTerm Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,11 +26,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <windows.h>
+#pragma once
 
-#if !defined(NTDDI_VERSION) || (NTDDI_VERSION < NTDDI_VISTA)
-// FOLDERID_* がSDK内に定義されていない
-// このファイル(*.obj)に実体を置く
-#define INITGUID
-#include "ttknownfolders.h"
-#endif
+BOOL IsPortableMode(void);
+char *GetAppDataDirU8(void);
+wchar_t *ToWcharU8(const char *strU8);
+char *ToU8W(const wchar_t *strW);
+char *GetModuleFileNameU8(void);

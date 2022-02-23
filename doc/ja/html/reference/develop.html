@@ -126,12 +126,8 @@ VSINSTALLDIR  C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC
   </li>
   <li>インストーラ
     <ul>
-      <li>Inno Setup 5.6.1 ANSI (http://www.jrsoftware.org/isinfo.php)
-        <ul>
-          <li>Inno Setup Preprocessor</li>
-        </ul>
-      </li>
-      <li>ISTool 5.3.0.1 (https://sourceforge.net/projects/istool/)</li>
+      <li>Inno Setup 6.2.0 (<a href="https://jrsoftware.org/isinfo.php">https://jrsoftware.org/isinfo.php</a>)
+      <li>Inno Script Studio 2.5.1 (<a href="https://www.kymoto.org/products/inno-script-studio">https://www.kymoto.org/products/inno-script-studio</a>)</li>
     </ul>
   </li>
   <li>その他
@@ -145,13 +141,10 @@ VSINSTALLDIR  C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC
             <li>リビジョン番号取得 (perlがない場合リビジョン番号を取得せずにビルドします)</li>
           </ul>
       </li>
-      <li>Subversion for Windows (http://sourceforge.net/projects/win32svn/)<br />
-          ソースのチェックアウトに使った svn と互換性のあるバージョン。<br />
-          libs\svn へ解凍します。("svnversion.exe" が libs\svn\bin に配置されるようにしてください)</li>
-      <li>Subversion for Windows (http://sourceforge.net/projects/win32svn/)<br />
+      <li>Subversion for Windows (<a href="http://sourceforge.net/projects/win32svn/">http://sourceforge.net/projects/win32svn/</a>)<br />
           リビジョン番号取得時に使用します<br />
-          svnrev_perl/toolinfo.txt に svn.exe のフルパスを記述いてください。<br />
-          詳しくは svnrev_perl/readme.md を参照ください
+          buildtools/svnrev/toolinfo.txt に svn.exe のフルパスを記述いてください。<br />
+          詳しくは buildtools/svnrev/readme.md を参照ください
       </li>
     </ul>
   </li>
@@ -161,13 +154,13 @@ VSINSTALLDIR  C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC
 <h2 id="library">ライブラリ</h2>
 
 <ul>
-  <li>Oniguruma 6.9.7.1 (https://github.com/kkos/oniguruma)</li>
-  <li>OpenSSL 1.1.1k (http://www.openssl.org/)</li>
-  <li>zlib 1.2.11 (http://www.zlib.net/)</li>
-  <li>PuTTY 0.76 (http://www.chiark.greenend.org.uk/~sgtatham/putty/)</li>
-  <li>SFMT 1.5.1 (http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/index.html)</li>
-  <li>cJSON 1.7.14 (https://github.com/DaveGamble/cJSON/)</li>
-  <li>The reference C implementation of Argon2 20190702 (https://github.com/P-H-C/phc-winner-argon2)</li>
+  <li>Oniguruma 6.9.7.1 (<a href="https://github.com/kkos/oniguruma/">https://github.com/kkos/oniguruma/</a>)</li>
+  <li>SFMT 1.5.1 (<a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/index-jp.html">http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/index-jp.html</a>)</li>
+  <li>LibreSSL 3.4.2 (<a href="https://www.libressl.org/">https://www.libressl.org/</a>)</li>
+  <li>zlib 1.2.11 (<a href="https://www.zlib.net/">https://www.zlib.net/</a>)</li>
+  <li>PuTTY 0.76 (<a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">https://www.chiark.greenend.org.uk/~sgtatham/putty/</a>)</li>
+  <li>The reference C implementation of Argon2 20190702 (<a href="https://github.com/P-H-C/phc-winner-argon2/">https://github.com/P-H-C/phc-winner-argon2/</a>)</li>
+  <li>cJSON 1.7.14 (<a href="https://github.com/DaveGamble/cJSON/">https://github.com/DaveGamble/cJSON/</a>)</li>
 </ul>
 
 
@@ -495,15 +488,15 @@ TeraTerm Project でのリリース手順について以下に示します。
   </li>
   <li>ツール、ライブラリ、インポート元の最新版をチェックする
     <ul>
-      <li>Visual Studio (<a href="https://visualstudio.microsoft.com">https://visualstudio.microsoft.com</a>)</li>
+      <li>Visual Studio (<a href="https://visualstudio.microsoft.com/">https://visualstudio.microsoft.com/</a>)</li>
       <li>Inno Setup (<a href="https://jrsoftware.org/isdl.php">https://jrsoftware.org/isdl.php</a>)</li>
-      <li>Oniguruma (<a href="https://github.com/kkos/oniguruma">https://github.com/kkos/oniguruma</a>)</li>
-      <li>OpenSSL (<a href="https://www.openssl.org">https://www.openssl.org</a>)</li>
-      <li>zlib (<a href="https://www.zlib.net">http://www.zlib.net</a>)</li>
-      <li>PuTTY (<a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">http://www.chiark.greenend.org.uk/~sgtatham/putty/</a>)</li>
+      <li>Oniguruma (<a href="https://github.com/kkos/oniguruma/">https://github.com/kkos/oniguruma/</a>)</li>
       <li>SFMT (<a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/index-jp.html">http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/index-jp.html</a>)</li>
-      <li>cJSON (<a href="https://github.com/DaveGamble/cJSON">https://github.com/DaveGamble/cJSON</a>)</li>
-      <li>The reference C implementation of Argon2 (<a href="https://github.com/P-H-C/phc-winner-argon2">https://github.com/P-H-C/phc-winner-argon2</a>)</li>
+      <li>LibreSSL (<a href="https://www.libressl.org/">https://www.libressl.org/</a>)</li>
+      <li>zlib (<a href="https://www.zlib.net/">http://www.zlib.net/</a>)</li>
+      <li>PuTTY (<a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">http://www.chiark.greenend.org.uk/~sgtatham/putty/</a>)</li>
+      <li>cJSON (<a href="https://github.com/DaveGamble/cJSON/">https://github.com/DaveGamble/cJSON/</a>)</li>
+      <li>The reference C implementation of Argon2 (<a href="https://github.com/P-H-C/phc-winner-argon2/">https://github.com/P-H-C/phc-winner-argon2/</a>)</li>
     </ul>
     <p>リリースに使うバージョンはこの時点でおおむね決定する。</p>
   </li>
@@ -583,17 +576,6 @@ TeraTerm Project でのリリース手順について以下に示します。
       </li>
       <li>teraterm.iss から起動するバッチを、リリース用に「リビルド有効」「アーカイブ作成有効」にする
         <pre>
-  [InnoIDE_PreCompile]
-  Name: makechm.bat
-- Name: build.bat
-- ;Name: build.bat; Parameters: rebuild
-+ ;Name: build.bat
-+ Name: build.bat; Parameters: rebuild
-  
-  [InnoIDE_PostCompile]
-- ;Name: makearchive.bat; Parameters: release
-+ Name: makearchive.bat; Parameters: release
-  
   [PreCompile]
   Name: makechm.bat
 - Name: build.bat
@@ -604,21 +586,10 @@ TeraTerm Project でのリリース手順について以下に示します。
   [PostCompile]
 - ;Name: makearchive.bat; Parameters: release
 + Name: makearchive.bat; Parameters: release
-  
-  [_ISToolPreCompile]
-  Name: makechm.bat
-- Name: build.bat
-- ;Name: build.bat; Parameters: rebuild
-+ ;Name: build.bat
-+ Name: build.bat; Parameters: rebuild
-  
-  [_ISToolPostCompile]
-- ;Name: makearchive.bat; Parameters: release
-+ Name: makearchive.bat; Parameters: release
         </pre>
       </li>
       <li id="RC_commit">この状態でコミットする</li>
-      <li>ISTool で teraterm\installer\teraterm.iss を開き、"Project"-"Compile Setup" でインストーラを作成する</li>
+      <li>Inno Script Studio で teraterm\installer\teraterm.iss を開き、"Project"-"Compile" でインストーラを作成する</li>
       <li>作成されたポータブル版を zip で圧縮する</li>
     </ul>
   </li>
@@ -674,7 +645,7 @@ svn copy -m "Release 4.106" \
   </li>
   <li>インストーラを作成する
     <ul>
-      <li>ISTool で teraterm\installer\teraterm.iss を開き、"Project"-"Compile Setup" で作成する</li>
+      <li>Inno Script Studio で teraterm\installer\teraterm.iss を開き、"Project"-"Compile" で作成する</li>
       <li>作成されたポータブル版を zip で圧縮する</li>
     </ul>
   </li>
@@ -704,17 +675,6 @@ svn copy -m "Release 4.106" \
 - ;#define snapshot GetDateTimeString('yyyymmdd_hhnnss', '', '');
 + #define snapshot GetDateTimeString('yyyymmdd_hhnnss', '', '');
 
-  [InnoIDE_PreCompile]
-  Name: makechm.bat
-- ;Name: build.bat
-- Name: build.bat; Parameters: rebuild
-+ Name: build.bat
-+ ;Name: build.bat; Parameters: rebuild
-  
-  [InnoIDE_PostCompile]
-- Name: makearchive.bat; Parameters: release
-+ ;Name: makearchive.bat; Parameters: release
-  
   [PreCompile]
   Name: makechm.bat
 - ;Name: build.bat
@@ -723,17 +683,6 @@ svn copy -m "Release 4.106" \
 + ;Name: build.bat; Parameters: rebuild
   
   [PostCompile]
-- Name: makearchive.bat; Parameters: release
-+ ;Name: makearchive.bat; Parameters: release
-  
-  [_ISToolPreCompile]
-  Name: makechm.bat
-- ;Name: build.bat
-- Name: build.bat; Parameters: rebuild
-+ Name: build.bat
-+ ;Name: build.bat; Parameters: rebuild
-  
-  [_ISToolPostCompile]
 - Name: makearchive.bat; Parameters: release
 + ;Name: makearchive.bat; Parameters: release
     </pre>

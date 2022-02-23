@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.11)
 
 project(teraterm_all)
 
-if(${CMAKE_GENERATOR} MATCHES "Visual Studio 8 2005")
+if(MSVC AND (MSVC_VERSION LESS_EQUAL 1400))
+  # Visual Studio 2005 (1400=VS2005)
   set(SUPPORT_OLD_WINDOWS_DEFAULT ON)
 else()
   set(SUPPORT_OLD_WINDOWS_DEFAULT OFF)
@@ -12,6 +13,7 @@ endif()
 option(SUPPORT_OLD_WINDOWS "windows 95 support" ${SUPPORT_OLD_WINDOWS_DEFAULT})
 option(ENABLE_TTXSAMPLES "TTXSamples" ON)
 option(MORE_WARNING "stronger warning" OFF)
+option(TTXSSH "ttxssh" ON)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -21,8 +23,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 #set(_WIN32_WINNT "0x0a00") # 0x0a00=_WIN32_WINNT_WIN10
 #set(_WIN32_WINNT "0x0501") # Tera Term がビルドできる最小値
-if(${CMAKE_GENERATOR} MATCHES "Visual Studio 8 2005" OR ${CMAKE_GENERATOR} MATCHES "Visual Studio 9 2008")
+if(MSVC AND (MSVC_VERSION LESS_EQUAL 1500))
+  # Visual Studio 2005, 2008  (1500=VS2008)
   set(_WIN32_WINNT "0x0501")
+  set(TTXSSH OFF)
 endif()
 
 if(MSVC)
@@ -134,7 +138,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/build_config.cmake")
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/teraterm/ttpdlg)
   execute_process(
     COMMAND ${PERL} svnrev.pl --svn "${Subversion_SVN_EXECUTABLE}" --git "${GIT_EXECUTABLE}" --root ${CMAKE_SOURCE_DIR} --header ${CMAKE_BINARY_DIR}/teraterm/ttpdlg/svnversion.h --cmake ${CMAKE_BINARY_DIR}/build_config.cmake
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/svnrev_perl
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/buildtools/svnrev
     RESULT_VARIABLE rv
     )
   if(NOT rv STREQUAL "0")
@@ -173,7 +177,9 @@ endif()
 add_subdirectory(teraterm)
 add_subdirectory(ttpmenu)
 add_subdirectory(TTProxy)
-add_subdirectory(ttssh2)
+if(TTXSSH)
+  add_subdirectory(ttssh2)
+endif(TTXSSH)
 add_subdirectory(TTXKanjiMenu)
 if(${ENABLE_TTXSAMPLES})
   add_subdirectory(TTXSamples)

@@ -1,8 +1,11 @@
 ﻿cmake_minimum_required(VERSION 3.11)
 
+option(UNICODE "use Unicode Win32 API" ON)
+
 message("CMAKE_COMMAND=${CMAKE_COMMAND}")
 message("CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 message("CMAKE_HOST_SYSTEM_NAME=${CMAKE_HOST_SYSTEM_NAME}")
+message("UNICODE=${UNICODE}")
 if(${CMAKE_HOST_SYSTEM_NAME} MATCHES "MSYS")
   message("MSYS2TERM=ON")
   set(MSYS2TERM ON)
@@ -17,30 +20,16 @@ endif()
 project(${PACKAGE_NAME})
 ENABLE_LANGUAGE(RC)
 
+file(WRITE "${CMAKE_CURRENT_LIST_DIR}/cygterm.rc" "icon ICON cygterm.ico")
+
 add_executable(
   ${PACKAGE_NAME}
   cygterm.cc
-  cygterm.rc
   cygterm_cfg.cc
   cygterm_cfg.h
-  )
-
-target_sources(
-  ${PACKAGE_NAME}
-  PRIVATE
-  ../../teraterm/common/ttlib.h
-#  ../../teraterm/common/ttlib_static_cpp.cpp
-  ../../teraterm/common/ttlib_static_dirs.cpp
-  ../../teraterm/common/asprintf.cpp
-  ../../teraterm/common/asprintf.h
-  ../../teraterm/common/win32helper.cpp
-  ../../teraterm/common/win32helper.h
-  ../../teraterm/common/compat_win.cpp
-  ../../teraterm/common/ttknownfolders.c
-  ../../teraterm/common/dllutil.cpp
-  ../../teraterm/common/dllutil.h
-  ../../teraterm/common/codeconv.cpp
-  ../../teraterm/common/codeconv.h
+  sub.cpp
+  sub.h
+  ${CMAKE_CURRENT_LIST_DIR}/cygterm.rc
   )
 
 if (MSYS2TERM)
@@ -65,11 +54,14 @@ target_compile_options(
   -Wall -Wextra
   )
 
-target_include_directories(
-  ${PACKAGE_NAME}
-  PRIVATE
-  ../../teraterm/common
-  )
+if(UNICODE)
+  target_compile_options(
+    ${PACKAGE_NAME}
+    PRIVATE
+    -DUNICODE=1
+    -D_UNICODE=1
+    )
+endif()
 
 target_link_options(
   ${PACKAGE_NAME}
@@ -91,4 +83,32 @@ install(
 install(
   FILES ${PACKAGE_NAME}.cfg
   DESTINATION .
+  )
+
+
+set(ARCHIVE "cygterm+.tar.gz")
+
+set(SRC
+  cygterm.cc
+  cygterm_cfg.cc
+  cygterm_cfg.h
+  sub.cpp
+  sub.h
+  #
+  cygterm.ico
+  #
+  cygterm.cfg
+  msys2term.cfg
+  )
+
+add_custom_target(
+  tar ALL
+  SOURCES ${CMAKE_CURRENT_LIST_DIR}/${ARCHIVE}
+  )
+
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/${ARCHIVE}
+  DEPENDS ${SRC}
+  COMMAND ${CMAKE_COMMAND} -E tar cvz ${CMAKE_CURRENT_LIST_DIR}/${ARCHIVE} COPYING README README-j Makefile CMakeLists.txt ${SRC}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   )

@@ -47,7 +47,11 @@ function(ConvertHTML CMD_OPTION)
   separate_arguments(CONV_CMD_OPTION)
   set(CMD ${CONV_CMD} ${CONV_CMD_OPTION})
 
-  string(JOIN " " CMD_PRINT ${CMD})
+  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
+    string(JOIN " " CMD_PRINT ${CMD})
+  else()
+    string(REPLACE ";" " " CMD_PRINT "${CMD}")
+  endif()
   #message(STATUS ${CMD_PRINT})
 
   execute_process(
@@ -86,8 +90,6 @@ if (NOT("${PERL}" STREQUAL "PERL-NOTFOUND"))
   ConvertHTML("-i ${REF_J}/build_with_cmake.md           -o ${REF_J}/build_with_cmake.html")
   ConvertHTML("-i ${REF_E}/build_library_with_cmake.md   -o ${REF_E}/build_library_with_cmake.html")
   ConvertHTML("-i ${REF_J}/build_library_with_cmake.md   -o ${REF_J}/build_library_with_cmake.html")
-  ConvertHTML("-i ${REF_E}/keyboard_cfg.md               -o ${REF_E}/keyboard_cfg.html")
-  ConvertHTML("-i ${REF_J}/keyboard_cfg.md               -o ${REF_J}/keyboard_cfg.html")
   ConvertHTML("-i ${REF_E}/menu_id.md                    -o ${REF_E}/menu_id.html")
   ConvertHTML("-i ${REF_J}/menu_id.md                    -o ${REF_J}/menu_id.html")
 

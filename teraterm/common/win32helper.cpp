@@ -29,18 +29,11 @@
 #include <windows.h>
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
-#if defined(_MSC_VER) || defined(__MINGW32__)
 #include <crtdbg.h>
-#endif
-#include <wchar.h>
 
 #include "asprintf.h"
 
 #include "win32helper.h"
-
-#if defined(__CYGWIN__)
-#define _wcsdup(p1)	wcsdup(p1)
-#endif
 
 /**
  *	GetModuleFileNameW() の動的バッファ版

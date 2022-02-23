@@ -31,6 +31,7 @@ AppCopyright=(C) 2004-2020 TeraTerm Project
 AppPublisher=TeraTerm Project
 AppPublisherURL=https://ttssh2.osdn.jp/
 AppSupportURL=https://ttssh2.osdn.jp/
+AppId={{07A7E17A-F6D6-44A7-82E6-6BEE528CCA2A}
 AppName={#AppName}
 #ifndef snapshot
 AppVersion={#AppVer}
@@ -40,7 +41,7 @@ AppVersion={#AppVer}+ snapshot-{#snapshot}
 AppVerName={#AppName} {#AppVer}+ snapshot-{#snapshot}
 #endif
 LicenseFile=release\license.txt
-DefaultDirName={pf}\teraterm
+DefaultDirName={pf}\teraterm5
 DefaultGroupName={#AppName}
 ShowLanguageDialog=yes
 AllowNoIcons=true
@@ -231,9 +232,13 @@ Root: HKCR; Subkey: TTYRecordFile\DefaultIcon; ValueType: string; ValueData: {ap
 Root: HKCR; Subkey: TTYRecordFile\shell\open\command; ValueType: string; ValueData: """{app}\ttermpro.exe"" /R=""%1"" /TTYPLAY"; Flags: uninsdeletekey; Check: not isWin2kOrLater; Components: Additional_Plugins/TTXttyrec; Tasks: ttyplayassoc
 
 [Tasks]
-Name: desktopicon; Description: {cm:task_desktopicon}; Components: TeraTerm
-Name: quicklaunchicon; Description: {cm:task_quicklaunchicon}; Components: TeraTerm
-Name: startupttmenuicon; Description: {cm:task_startupttmenuicon}; Components: TeraTerm_Menu
+; Tera Term 4 のを上書きしないよう、テスト版の間はデフォルトを off にする
+; Name: desktopicon; Description: {cm:task_desktopicon}; Components: TeraTerm
+; Name: quicklaunchicon; Description: {cm:task_quicklaunchicon}; Components: TeraTerm
+; Name: startupttmenuicon; Description: {cm:task_startupttmenuicon}; Components: TeraTerm_Menu
+Name: desktopicon; Description: {cm:task_desktopicon}; Components: TeraTerm; Flags: unchecked
+Name: quicklaunchicon; Description: {cm:task_quicklaunchicon}; Components: TeraTerm; Flags: unchecked
+Name: startupttmenuicon; Description: {cm:task_startupttmenuicon}; Components: TeraTerm_Menu; Flags: unchecked
 Name: cygtermhere; Description: {cm:task_cygtermhere}; Components: cygterm; Flags: unchecked
 Name: quickcyglaunch; Description: {cm:task_quickcyglaunch}; Components: cygterm; Flags: unchecked
 Name: macroassoc; Description: {cm:task_macroassoc}; Components: TeraTerm; Flags: unchecked
@@ -478,22 +483,16 @@ end;
 procedure SetIniFile(iniFile: String);
 var
   Language      : String;
-  Locale        : String;
-  CodePage      : integer;
   VTFont        : String;
   TEKFont       : String;
-  FileDir       : String;
   TCPPort       : integer;
   ViewlogEditor : String;
   CipherOrder   : String;
 
 begin
   Language       := GetIniString('Tera Term', 'Language', '', iniFile);
-  Locale         := GetIniString('Tera Term', 'Locale', '', iniFile);
-  CodePage       := GetIniInt('Tera Term', 'CodePage', 0, 0, 0, iniFile);
   VTFont         := GetIniString('Tera Term', 'VTFont', '', iniFile);
   TEKFont        := GetIniString('Tera Term', 'TEKFont', '', iniFile);
-  FileDir        := GetIniString('Tera Term', 'FileDir', '', iniFile);
   TCPPort        := GetIniInt('Tera Term', 'TCPPort', 0, 0, 65535, iniFile)
   ViewlogEditor  := GetIniString('Tera Term', 'ViewlogEditor', '', iniFile);
   CipherOrder    := GetIniString('TTSSH', 'CipherOrder', '', iniFile);
@@ -501,24 +500,6 @@ begin
   case GetUILanguage and $3FF of
   $04: // Chinese
     begin
-
-      case GetUILanguage of
-      $c04, $1404, $404: // Hong Kong, Macao, Taiwan
-        begin
-          if Length(Locale) = 0 then
-            SetIniString('Tera Term', 'Locale', 'cht', iniFile);
-          if CodePage = 0 then
-            SetIniInt('Tera Term', 'CodePage', 950, iniFile);
-        end;
-      else
-        begin
-          if Length(Locale) = 0 then
-            SetIniString('Tera Term', 'Locale', 'chs', iniFile);
-          if CodePage = 0 then
-            SetIniInt('Tera Term', 'CodePage', 936, iniFile);
-        end;
-      end;
-
       if Length(Language) = 0 then
         SetIniString('Tera Term', 'Language', 'UTF-8', iniFile);
       if Length(VTFont) = 0 then
@@ -530,10 +511,6 @@ begin
     begin
       if Length(Language) = 0 then
         SetIniString('Tera Term', 'Language', 'Japanese', iniFile);
-      if Length(Locale) = 0 then
-        SetIniString('Tera Term', 'Locale', 'japanese', iniFile);
-      if CodePage = 0 then
-        SetIniInt('Tera Term', 'CodePage', 932, iniFile);
       if Length(VTFont) = 0 then
         SetIniString('Tera Term', 'VTFont', 'Terminal,0,-19,128', iniFile);
       if Length(TEKFont) = 0 then
@@ -543,10 +520,6 @@ begin
     begin
       if Length(Language) = 0 then
         SetIniString('Tera Term', 'Language', 'Korean', iniFile);
-      if Length(Locale) = 0 then
-        SetIniString('Tera Term', 'Locale', 'korean', iniFile);
-      if CodePage = 0 then
-        SetIniInt('Tera Term', 'CodePage', 949, iniFile);
       if Length(VTFont) = 0 then
         SetIniString('Tera Term', 'VTFont', 'Terminal,0,-12,255', iniFile);
       if Length(TEKFont) = 0 then
@@ -556,10 +529,6 @@ begin
     begin
       if Length(Language) = 0 then
         SetIniString('Tera Term', 'Language', 'Russian', iniFile);
-      if Length(Locale) = 0 then
-        SetIniString('Tera Term', 'Locale', 'russian', iniFile);
-      if CodePage = 0 then
-        SetIniInt('Tera Term', 'CodePage', 1251, iniFile);
       if Length(VTFont) = 0 then
         SetIniString('Tera Term', 'VTFont', 'Terminal,0,-12,255', iniFile);
       if Length(TEKFont) = 0 then
@@ -572,19 +541,11 @@ begin
 
         if Length(Language) = 0 then
           SetIniString('Tera Term', 'Language', 'UTF-8', iniFile);
-        if Length(Locale) = 0 then
-          SetIniString('Tera Term', 'Locale', 'american', iniFile);
-        if CodePage = 0 then
-          SetIniInt('Tera Term', 'CodePage', 65001, iniFile);
 
       end else begin // Other
 
         if Length(Language) = 0 then
           SetIniString('Tera Term', 'Language', 'English', iniFile);
-        if Length(Locale) = 0 then
-          SetIniString('Tera Term', 'Locale', 'english', iniFile);
-        if CodePage = 0 then
-          SetIniInt('Tera Term', 'CodePage', 1252, iniFile);
 
       end;
 
@@ -612,11 +573,6 @@ begin
       SetIniString('Tera Term', 'UILanguageFile', 'lang\Traditional Chinese.lng', iniFile);
     else
       SetIniString('Tera Term', 'UILanguageFile', 'lang\Default.lng', iniFile);
-  end;
-
-  if Length(FileDir) = 0 then begin
-    FileDir := ExpandConstant('{app}');
-    SetIniString('Tera Term', 'FileDir', FileDir, iniFile);
   end;
 
   if TCPPort = 0 then begin

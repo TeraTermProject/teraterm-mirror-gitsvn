@@ -59,8 +59,7 @@ static char Program[] = "CygTerm+";
 #include <sys/select.h>
 #include <wchar.h>
 
-#include "ttlib.h"
-#include "codeconv.h"
+#include "sub.h"
 
 #include "cygterm_cfg.h"
 
@@ -113,11 +112,6 @@ static char *conf_appdata_full; // $APPDATA/teraterm5/cygterm.cfg
 static char *sys_conf;          // /etc/cygterm.conf
 static char *usr_conf;          // ~/cygtermrc  $HOME/cygtermrc
 
-extern "C" BOOL IsWindowsXPOrLater(void)
-{
-	return TRUE;
-}
-
 //================//
 // message output //
 //----------------//
@@ -137,7 +131,7 @@ void api_error(const char* string = NULL)
     char *ptr = msg;
     if (string != NULL)
         ptr += snprintf(ptr, sizeof(msg), "%s\n\n", string);
-    FormatMessage(
+    FormatMessageA(
         FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         ptr, sizeof(msg)-(ptr-msg), NULL
@@ -180,44 +174,13 @@ void debug_msg_print(const char* msg, ...)
 	}
 }
 
-// '\\' -> '/'
-void convert_bs(char *path)
+static void get_cfg_filenames()
 {
-    char *p = path;
-    while(*p != 0) {
-        if (*p == '\\') {
-            *p = '/';
-        }
-        p++;
-    }
-}
-
-// L'\\' -> L'/'
-void convert_bsW(wchar_t *path)
-{
-    wchar_t *p = path;
-    while(*p != 0) {
-        if (*p == L'\\') {
-            *p = L'/';
-        }
-        p++;
-    }
-}
-
-// $APPDATA
-char *get_appdata_dir()
-{
-	wchar_t *homeW = GetHomeDirW(NULL);
-	convert_bsW(homeW);
-	char *homeU8 = ToU8W(homeW);
-	free(homeW);
-	return homeU8;
-}
-
-static void get_cfg_filenames(const char *argv0)
-{
+	char *argv0 = GetModuleFileNameU8();
 	// cfg base filename "cygterm.cfg"
-	char *p = strrchr(argv0, '/') + 1;
+	char *p = strrchr(argv0, '.');
+	*p = 0;	// cut ".exe"
+	p = strrchr(argv0, '/') + 1;
 	cfg_base = (char *)malloc(strlen(p) + 5);
 	strcpy(cfg_base, p);
 	strcat(cfg_base, ".cfg");
@@ -227,6 +190,8 @@ static void get_cfg_filenames(const char *argv0)
 	strcpy(cfg_exe, argv0);
 	p = strrchr(cfg_exe, '/') + 1;
 	strcpy(p, cfg_base);
+	free(argv0);
+	argv0 = NULL;
 
 	// home	 $HOME/cygtermrc
 	const char *home = getenv("HOME");
@@ -245,11 +210,12 @@ static void get_cfg_filenames(const char *argv0)
 	strcpy(p, ".conf");		// ".cfg" -> ".conf"
 
 	// $APPDATA/teraterm5/cygterm.cfg
-	char *appdata = get_appdata_dir();
-	size_t len = strlen(appdata) + 1 + strlen(cfg_base) + 1;
+	char *appdata = GetAppDataDirU8();
+	const char *teraterm = "/teraterm5/";
+	size_t len = strlen(appdata) + strlen(teraterm) + strlen(cfg_base) + 1;
 	conf_appdata_full = (char *)malloc(sizeof(char) * len);
 	strcpy(conf_appdata_full, appdata);
-	strcat(conf_appdata_full, "/");
+	strcat(conf_appdata_full, teraterm);
 	strcat(conf_appdata_full, cfg_base);
 	free(appdata);
 }
@@ -279,19 +245,48 @@ static void get_username_and_shell(cfg_data_t *cfg)
 	}
 }
 
+#define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+
 //====================//
 // load configuration //
 //--------------------//
 static void load_cfg(cfg_data_t *cfg)
 {
-	char *conf_path[] = {
-		cfg_exe,	  // [exe directory]/cygterm.cfg
+	// 設定ファイル読み込み順
+	//		リストの上のほうから先に読み込まれる
+	//		リストの下のほうから後に読み込まれる(あと勝ち)
+	//		下の方が優先順位が高い
+	// 通常時
+	char *conf_order_normal_list[] = {
+		cfg_exe,			// [exe directory]/cygterm.cfg
 		sys_conf,			// /etc/cygterm.conf
 		conf_appdata_full,	// $APPDATA/teraterm5/cygterm.cfg
 		usr_conf			// ~/cygtermrc
 	};
-	for (int i = 0; i < (int)(sizeof(conf_path)/sizeof(conf_path[0])); i++) {
-		const char *fname = conf_path[i];
+	const int conf_order_normal_count = (int)_countof(conf_order_normal_list);
+
+	// ポータブル時
+	char *conf_order_portable_list[] = {
+		cfg_exe,			// [exe directory]/cygterm.cfg
+	};
+	const int conf_order_portable_count = (int)_countof(conf_order_portable_list);
+
+	char **conf_order_list;
+	int conf_order_count;
+	if (IsPortableMode()) {
+		// ポータブル時
+		conf_order_list = conf_order_portable_list;
+		conf_order_count = conf_order_portable_count;
+	}
+	else {
+		// 通常時
+		conf_order_list = conf_order_normal_list;
+		conf_order_count = conf_order_normal_count;
+	}
+
+	// 実際に読み込む
+	for (int i = 0; i < conf_order_count; i++) {
+		const char *fname = conf_order_list[i];
 		debug_msg_print("load %s", fname);
 		// ignore empty configuration file path
 		if (fname == NULL || strcmp(fname, "") == 0) {
@@ -433,14 +428,14 @@ unsigned long agent_request(unsigned char *out, unsigned long out_size, unsigned
 		goto agent_error;
 	}
 
-	hwnd = FindWindow("Pageant", "Pageant");
+	hwnd = FindWindowA("Pageant", "Pageant");
 	if (!hwnd) {
 		goto agent_error;
 	}
 
 	sprintf(mapname, "PageantRequest%08x", (unsigned)GetCurrentThreadId());
-	fmap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
-	                         0, AGENT_MAX_MSGLEN, mapname);
+	fmap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
+							  0, AGENT_MAX_MSGLEN, mapname);
 	if (!fmap) {
 		goto agent_error;
 	}
@@ -454,7 +449,7 @@ unsigned long agent_request(unsigned char *out, unsigned long out_size, unsigned
 	cds.lpData = mapname;
 
 	memcpy(p, in, len + 4);
-	if (SendMessage(hwnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&cds) > 0) {
+	if (SendMessageA(hwnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&cds) > 0) {
 		len = get_uint32(p);
 		if (out_size >= len + 4) {
 			memcpy(out, p, len + 4);
@@ -718,36 +713,47 @@ static int exec_agent_proxy(sh_env_t *sh_env)
 //-----------------------------//
 DWORD WINAPI term_thread(LPVOID param)
 {
-    cfg_data_t *cfg = (cfg_data_t *)param;
+	cfg_data_t *cfg = (cfg_data_t *)param;
 
-    in_addr addr;
-    addr.s_addr = htonl(INADDR_LOOPBACK);
-    char term[256];
-    snprintf(term, sizeof(term), cfg->term, inet_ntoa(addr), (int)ntohs(listen_port));
-    if (cfg->termopt != NULL) {
-        strcat(term, " ");
-        strcat(term, cfg->termopt);
-    }
+	in_addr addr;
+	addr.s_addr = htonl(INADDR_LOOPBACK);
+	char *term;
+	asprintf(&term, cfg->term, inet_ntoa(addr), (int)ntohs(listen_port));
+	if (cfg->termopt != NULL) {
+		char *tmp;
+		asprintf(&tmp, "%s %s", tmp, cfg->termopt);
+		free(term);
+		term = tmp;
+	}
 
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    FillMemory(&si, sizeof(si), 0);
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_SHOW;
-    DWORD flag = 0;
+	debug_msg_print("CreateProcess '%s'", term);
 
-    debug_msg_print("CreateProcess '%s'", term);
-    if (!CreateProcess(
-            NULL, term, NULL, NULL, FALSE, flag, NULL, NULL, &si, &pi))
-    {
-        api_error(term);
-        return 0;
-    }
-    WaitForSingleObject(pi.hProcess, INFINITE);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    return 0;
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	FillMemory(&si, sizeof(si), 0);
+	si.cb = sizeof(si);
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_SHOW;
+	DWORD flag = 0;
+
+#if defined(UNICODE)
+	wchar_t *termT = ToWcharU8(term);
+#else
+	char *termT = strdup(term);
+#endif
+
+	BOOL r =
+		CreateProcess(
+			NULL, termT, NULL, NULL, FALSE, flag, NULL, NULL, &si, &pi);
+	free(termT);
+	if (!r) {
+		api_error(term);
+		return 0;
+	}
+	WaitForSingleObject(pi.hProcess, INFINITE);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+	return 0;
 }
 
 //=======================================//
@@ -936,7 +942,7 @@ static int exec_shell(int* sh_pid, cfg_data_t *cfg)
             }
         }
         // set env vars
-        if (cfg->term_type != 0) {
+        if (cfg->term_type != NULL) {
             // set terminal type to $TERM
             setenv("TERM", cfg->term_type, 1);
         }
@@ -1279,7 +1285,7 @@ int main(int argc, char** argv)
 
 
     // configuration file (.cfg) path
-    get_cfg_filenames(argv[0]);
+    get_cfg_filenames();
     debug_msg_print("cfg_base %s", cfg_base);
     debug_msg_print("cfg_exe %s", cfg_exe);
     debug_msg_print("conf_appdata_full %s", conf_appdata_full);
@@ -1411,6 +1417,12 @@ int main(int argc, char** argv)
 }
 
 #ifdef NO_WIN_MAIN
+// リンク時に -mwindows を指定しているので
+// 実行ファイルは subsystem=windows で生成されている
+// プログラムのエントリは WinMainCRTStartup() となる
+// cygwinでインストールされるgcc 11.2 ではとくに指定しなくても main() がコールされる
+//
+// 以前のcygwinのgccでは次のコードが必要だったのかもしれない
 // This program is an Win32 application but, start as Cygwin main().
 //------------------------------------------------------------------
 extern "C" {

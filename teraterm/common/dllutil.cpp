@@ -26,26 +26,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define __STDC_WANT_LIB_EXT1__
 #include <windows.h>
 #include <assert.h>
 #if !defined(_CRTDBG_MAP_ALLOC)
 #define _CRTDBG_MAP_ALLOC
 #endif
-#if defined(_MSC_VER) || defined(__MINGW32__)
 #include <crtdbg.h>
-#endif
-#include <wchar.h>
 
 #include "compat_win.h"
 #include "ttlib.h"	// for IsWindowsXPOrLater()
 
 #include "dllutil.h"
-
-#if defined(__CYGWIN__)
-#define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
-#define _wcsdup(p) wcsdup(p)
-#endif
 
 typedef struct {
 	const wchar_t *fname;
@@ -56,14 +47,6 @@ typedef struct {
 
 static HandleList_t *HandleList;
 static int HandleListCount;
-
-#if defined(__CYGWIN__) && !defined(__STDC_LIB_EXT1__)
-static void wcscat_s(wchar_t *dest, rsize_t size, const wchar_t *src)
-{
-	(void)size;
-	wcscat(dest, src);
-}
-#endif
 
 static HMODULE GetHandle(const wchar_t *fname, DLLLoadFlag LoadFlag)
 {

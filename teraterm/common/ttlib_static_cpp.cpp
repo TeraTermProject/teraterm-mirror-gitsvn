@@ -36,9 +36,7 @@
 #define _CRTDBG_MAP_ALLOC
 #endif
 #include <stdlib.h>
-#if defined(_MSC_VER) || defined(__MINGW32__)
 #include <crtdbg.h>
-#endif
 #include <assert.h>
 #include <wchar.h>
 #include <shlobj.h>
@@ -737,6 +735,59 @@ BOOL GetFileNamePosU8(const char *PathName, int *DirLen, int *FNPos)
 }
 
 /**
+ *	ファイル名(パス名)を解析する
+ *	GetFileNamePos() の wchar_t版
+ *
+ *	@param[in]	PathName	ファイル名、フルパス
+ *	@param[out]	DirLen		末尾のスラッシュを含むディレクトリパス長
+ *							NULLのとき値を返さない
+ *	@param[out]	FNPos		ファイル名へのindex
+ *							&PathName[FNPos] がファイル名
+ *							NULLのとき値を返さない
+ *	@retval		FALSE		PathNameが不正
+ */
+BOOL GetFileNamePosW(const wchar_t *PathName, size_t *DirLen, size_t *FNPos)
+{
+	const wchar_t *Ptr;
+	const wchar_t *DirPtr;
+	const wchar_t *FNPtr;
+	const wchar_t *PtrOld;
+
+	if (DirLen != NULL) *DirLen = 0;
+	if (FNPos != NULL) *FNPos = 0;
+
+	if (PathName==NULL)
+		return FALSE;
+
+	if ((wcslen(PathName)>=2) && (PathName[1]==L':'))
+		Ptr = &PathName[2];
+	else
+		Ptr = PathName;
+	if (Ptr[0]=='\\' || Ptr[0]=='/')
+		Ptr++;
+
+	DirPtr = Ptr;
+	FNPtr = Ptr;
+	while (Ptr[0]!=0) {
+		wchar_t b = Ptr[0];
+		PtrOld = Ptr;
+		Ptr++;
+		switch (b) {
+			case L':':
+				return FALSE;
+			case L'/':	/* FALLTHROUGH */
+			case L'\\':
+				DirPtr = PtrOld;
+				FNPtr = Ptr;
+				break;
+		}
+	}
+	if (DirLen != NULL) *DirLen = DirPtr-PathName;
+	if (FNPos != NULL) *FNPos = FNPtr-PathName;
+	return TRUE;
+}
+
+/**
  *	ConvHexCharW() の wchar_t 版
  */
 BYTE ConvHexCharW(wchar_t b)
@@ -798,6 +849,153 @@ int Hex2StrW(const wchar_t *Hex, wchar_t *Str, size_t MaxLen)
 	return (int)j;
 }
 
+/**
+ *	ExtractFileName() の wchar_t 版
+ *	フルパスからファイル名部分を取り出す
+ *
+ *	@return	ファイル名部分(不要になったらfree()する)
+ */
+wchar_t *ExtractFileNameW(const wchar_t *PathName)
+{
+	size_t i;
+	if (!GetFileNamePosW(PathName, NULL, &i))
+		return NULL;
+	wchar_t *filename = _wcsdup(&PathName[i]);
+	return filename;
+}
+
+/**
+ *	ExtractDirName() の wchar_t 版
+ *
+ *	@return	ディレクトリ名部分(不要になったらfree()する)
+ */
+wchar_t *ExtractDirNameW(const wchar_t *PathName)
+{
+	size_t i;
+	wchar_t *DirName = _wcsdup(PathName);
+	if (!GetFileNamePosW(DirName, &i, NULL))
+		return NULL;
+	DirName[i] = 0;
+	return DirName;
+}
+
+/*
+ * Get Exe(exe,dll) directory
+ *	ttermpro.exe, プラグインがあるフォルダ
+ *	ttypes.ExeDirW と同一
+ *	もとは GetHomeDirW() だった
+ *
+ * @param[in]		hInst		WinMain()の HINSTANCE または NULL
+ * @return			ExeDir		不要になったら free() すること
+ *								文字列の最後にパス区切り('\')はついていない
+ */
+wchar_t *GetExeDirW(HINSTANCE hInst)
+{
+	wchar_t *TempW;
+	wchar_t *dir;
+	DWORD error = hGetModuleFileNameW(hInst, &TempW);
+	if (error != NO_ERROR) {
+		// パスの取得に失敗した。致命的、abort() する。
+		abort();
+	}
+	dir = ExtractDirNameW(TempW);
+	free(TempW);
+	return dir;
+}
+
+#define PORTABLE_FILENAME L"portable.ini"
+
+/**
+ *	ポータブル版として動作するか
+ *
+ *	@retval		TRUE		ポータブル版
+ *	@retval		FALSE		通常インストール版
+ */
+BOOL IsPortableMode(void)
+{
+	static BOOL called = FALSE;
+	static BOOL ret_val = FALSE;
+	if (called == FALSE) {
+		called = TRUE;
+		wchar_t *exe_dir = GetExeDirW(NULL);
+		wchar_t *portable_ini = NULL;
+		awcscats(&portable_ini, exe_dir, L"\\", PORTABLE_FILENAME, NULL);
+		free(exe_dir);
+		DWORD r = GetFileAttributesW(portable_ini);
+		free(portable_ini);
+		if (r == INVALID_FILE_ATTRIBUTES) {
+			//ファイルが存在しない
+			ret_val = FALSE;
+		}
+		else {
+			ret_val = TRUE;
+		}
+	}
+	return ret_val;
+}
+
+/*
+ * Get home directory
+ *		個人用設定ファイルフォルダ取得
+ *		ttypes.HomeDirW と同一
+ *		TERATERM.INI などがおいてあるフォルダ
+ *		ttermpro.exe があるフォルダは GetHomeDirW() ではなく GetExeDirW() で取得できる
+ *		ExeDirW に portable.ini がある場合
+ *			ExeDirW
+ *		ExeDirW に portable.ini がない場合
+ *			%APPDATA%\teraterm5 (%USERPROFILE%\AppData\Roaming\teraterm5)
+ *
+ * @param[in]		hInst		WinMain()の HINSTANCE または NULL
+ * @return			HomeDir		不要になったら free() すること
+ *								文字列の最後にパス区切り('\')はついていない
+ */
+wchar_t *GetHomeDirW(HINSTANCE hInst)
+{
+	if (IsPortableMode()) {
+		return GetExeDirW(hInst);
+	}
+	else {
+		wchar_t *path;
+		wchar_t *ret = NULL;
+		_SHGetKnownFolderPath(FOLDERID_RoamingAppData, KF_FLAG_CREATE, NULL, &path);
+		awcscats(&ret, path, L"\\teraterm5", NULL);
+		free(path);
+		CreateDirectoryW(ret, NULL);
+		return ret;
+	}
+}
+
+/*
+ * Get log directory
+ *		ログ保存フォルダ取得
+ *		ttypes.LogDirW と同一
+ *		ExeDirW に portable.ini がある場合
+ *			ExeDirW\log
+ *		ExeDirW に portable.ini がない場合
+ *			%LOCALAPPDATA%\teraterm5 (%USERPROFILE%\AppData\Local\teraterm5)
+ *
+ * @param[in]		hInst		WinMain()の HINSTANCE または NULL
+ * @return			LogDir		不要になったら free() すること
+ *								文字列の最後にパス区切り('\')はついていない
+ */
+wchar_t* GetLogDirW(HINSTANCE hInst)
+{
+	wchar_t *ret = NULL;
+	if (IsPortableMode()) {
+		wchar_t *ExeDirW = GetExeDirW(hInst);
+		awcscats(&ret, ExeDirW, L"\\log", NULL);
+		free(ExeDirW);
+	}
+	else {
+		wchar_t *path;
+		_SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, NULL, &path);
+		awcscats(&ret, path, L"\\teraterm5", NULL);
+		free(path);
+	}
+	CreateDirectoryW(ret, NULL);
+	return ret;
+}
+
 /*
  *	UILanguageFileのフルパスを取得する
  *
@@ -823,42 +1021,11 @@ wchar_t *GetUILanguageFileFullW(const wchar_t *HomeDir, const wchar_t *UILanguag
  *	設定ファイルのフルパスを取得する
  *
  *	@param[in]	home	ttermpro.exe 等の実行ファイルのあるフォルダ
- *						My Documents にファイルがあった場合は使用されない
  *	@param[in]	file	設定ファイル名(パスは含まない)
  *	@return		フルパス (不要になったら free() すること)
- *
- *	- My Documents にファイルがあった場合,
- *		- "%USERPROFILE%\My Documents\{file}"
- *		- "%USERPROFILE%\Documents\{file}" など
- *	- なかった場合
- *		- "{home}\{file}"
  */
 wchar_t *GetDefaultFNameW(const wchar_t *home, const wchar_t *file)
 {
-	// My Documents に file がある場合、
-	// それを読み込むようにした。(2007.2.18 maya)
-	wchar_t *MyDoc;
-	_SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &MyDoc);
-
-	if (MyDoc[0] != 0) {
-		// My Documents に file があるか?
-		size_t destlen = (wcslen(MyDoc) + wcslen(file) + 1 + 1) * sizeof(wchar_t);
-		wchar_t *dest = (wchar_t *)malloc(sizeof(wchar_t) * destlen);
-		wcscpy_s(dest, destlen, MyDoc);
-		AppendSlashW(dest,destlen);
-		wcsncat_s(dest, destlen, file, _TRUNCATE);
-		DWORD r = GetFileAttributesW(dest);
-		free(MyDoc);
-		if (r != INVALID_FILE_ATTRIBUTES) {
-			// My Documents の設定ファイル
-			return dest;
-		}
-		free(dest);
-	}
-	else {
-		free(MyDoc);
-	}
-
 	size_t destlen = (wcslen(home) + wcslen(file) + 1 + 1) * sizeof(wchar_t);
 	wchar_t *dest = (wchar_t *)malloc(sizeof(wchar_t) * destlen);
 	wcscpy_s(dest, destlen, home);
@@ -973,7 +1140,7 @@ int GetNthNum2(PCHAR Source, int Nth, int defval)
 wchar_t *GetDownloadFolderW(void)
 {
 	wchar_t *download;
-	_SHGetKnownFolderPath(FOLDERID_Downloads, 0, NULL, &download);
+	_SHGetKnownFolderPath(FOLDERID_Downloads, KF_FLAG_CREATE, NULL, &download);
 	return download;
 }
 

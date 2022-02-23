@@ -195,15 +195,10 @@ if ERRORLEVEL 1 (
 popd
 
 
-rem "rebuild"を指定しない場合、svnversion.h を更新する。
-if not exist ..\teraterm\ttpdlg\svnversion.h goto create_svnversion_h
-if "%BUILD%" == "rebuild" goto build
+rem リビジョンが変化していれば svnversion.h を更新する。
+call ..\buildtools\svnrev\svnrev.bat
 
-del ..\teraterm\ttpdlg\svnversion.h
-:create_svnversion_h
-call ..\svnrev_perl\svnrev.bat
 
-:build
 devenv /%BUILD% release %TERATERMSLN%
 if ERRORLEVEL 1 goto fail
 devenv /%BUILD% release %TTSSHSLN%

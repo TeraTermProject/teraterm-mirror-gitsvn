@@ -48,7 +48,6 @@
 #define ENABLE_COMAPT_WIN	1
 #endif
 
-#include "i18n.h"
 #include "asprintf.h"
 #include "win32helper.h"	// for hGetModuleFileNameW()
 #include "ttknownfolders.h"

@@ -55,21 +55,14 @@ ICO = cygterm.ico
 CFG = cygterm.cfg
 ARCHIVE = cygterm+.tar.gz
 
-ifneq (,$(wildcard ../Release/cyglaunch.exe))
-CYGLAUNCH_DIR = ../Release
-else
-ifneq (,$(wildcard ./cyglaunch.exe))
-CYGLAUNCH_DIR = .
-else
-CYGLAUNCH_DIR =
-endif
-endif
-
 .PHONY: all clean install uninstall archive
 .PHONY: cygterm+-x86_64 cygterm+-i686
 .PHONY: cygterm+-x86_64-clean cygterm+-i686-clean
 
 all : $(EXE)
+ifneq (,$(wildcard Makefile.cyglaunch))
+	make -f Makefile.cyglaunch
+endif
 
 -include $(DEP)
 
@@ -105,12 +98,15 @@ uninstall :
 	rm -f $(BINDIR)/$(EXE)
 	rm -f $(BINDIR)/$(CFG)
 
-$(ARCHIVE) : $(SRC) $(H) $(ICO) $(CFG) README README-j Makefile CMakeLists.txt
-ifeq (,$(CYGLAUNCH_DIR))
-	tar cf - $(SRC) $(H) $(ICO) $(CFG) COPYING README README-j Makefile CMakeLists.txt msys2term.cfg $(CYGLAUNCH) | gzip > $(ARCHIVE)
-else
-	tar cf - $(SRC) $(H) $(ICO) $(CFG) COPYING README README-j Makefile CMakeLists.txt msys2term.cfg -C $(CYGLAUNCH_DIR) cyglaunch.exe | gzip > $(ARCHIVE)
-endif
+$(ARCHIVE) : $(SRC) $(H) $(ICO) $(CFG) COPYING README README-j Makefile CMakeLists.txt
+	rm -f $(ARCHIVE)
+	rm -rf tar_tmp/
+	mkdir tar_tmp
+	cp $^ tar_tmp/
+	cd ../cyglaunch/; make copyfile COPY_DEST=../cygterm/tar_tmp
+	(cd tar_tmp; tar cf ../$(ARCHIVE:.gz=) *)
+	gzip $(ARCHIVE:.gz=)
+	rm -rf tar_tmp/
 
 cygterm.o:
   ifeq (0, $(shell nm /usr/lib/crt0.o | grep -c WinMainCRTStartup))

@@ -470,24 +470,31 @@ static INT_PTR CALLBACK OnSetupDirectoryDlgProc(HWND hDlgWnd, UINT msg, WPARAM w
 {
 	static const DlgTextInfo TextInfos[] = {
 		{ 0, "DLG_SETUPDIR_TITLE" },
+#if 0
 		{ IDC_INI_SETUPDIR_GROUP, "DLG_SETUPDIR_INIFILE" },
 		{ IDC_KEYCNF_SETUPDIR_GROUP, "DLG_SETUPDIR_KEYBOARDFILE" },
 		{ IDC_CYGTERM_SETUPDIR_GROUP, "DLG_SETUPDIR_CYGTERMFILE" },
 		{ IDC_SSH_SETUPDIR_GROUP, "DLG_SETUPDIR_KNOWNHOSTSFILE" },
+#endif
 	};
 	TTTSet *pts = (TTTSet *)GetWindowLongPtr(hDlgWnd, DWLP_USER);
+#if 0
 	wchar_t *tmpbufW;
 	HWND hWnd;
+#endif
 
 	switch (msg) {
 	case WM_INITDIALOG: {
+#if 0
 		BOOL ret;
+#endif
 		pts = (TTTSet *)lp;
 		SetWindowLongPtr(hDlgWnd, DWLP_USER, (LONG_PTR)pts);
 
 		// I18N
 		SetDlgTextsW(hDlgWnd, TextInfos, _countof(TextInfos), pts->UILanguageFileW);
 
+#if 0
 		// 設定ファイル(teraterm.ini)のパスを取得する。
 		/// (1)
 		SetDlgItemTextW(hDlgWnd, IDC_INI_SETUPDIR_EDIT, pts->SetupFNameW);
@@ -592,6 +599,8 @@ static INT_PTR CALLBACK OnSetupDirectoryDlgProc(HWND hDlgWnd, UINT msg, WPARAM w
 		}
 
 		/////////////////////////////////////////////////////////////
+#endif
+
 		HWND hWndList = GetDlgItem(hDlgWnd, IDC_SETUP_DIR_LIST);
 		ListView_SetExtendedListViewStyleEx(hWndList, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
 
@@ -703,12 +712,15 @@ static INT_PTR CALLBACK OnSetupDirectoryDlgProc(HWND hDlgWnd, UINT msg, WPARAM w
 	}
 
 	case WM_COMMAND: {
+#if 0
 		BOOL button_pressed = FALSE;
 		BOOL open_dir = FALSE;
 		int edit;
 		int edit_vstore;
+#endif
 		switch (LOWORD(wp)) {
-		case IDC_INI_SETUPDIR_BUTTON | (BN_CLICKED << 16) :
+#if 0
+			case IDC_INI_SETUPDIR_BUTTON | (BN_CLICKED << 16) :
 			edit = IDC_INI_SETUPDIR_EDIT;
 			edit_vstore = IDC_INI_SETUPDIR_EDIT_VSTORE;
 			open_dir = TRUE;
@@ -763,7 +775,7 @@ static INT_PTR CALLBACK OnSetupDirectoryDlgProc(HWND hDlgWnd, UINT msg, WPARAM w
 			open_dir = FALSE;
 			button_pressed = TRUE;
 			break;
-
+#endif
 		case IDHELP:
 			OpenHelp(HH_HELP_CONTEXT, HlpMenuSetupDir, pts->UILanguageFile);
 			break;
@@ -781,7 +793,7 @@ static INT_PTR CALLBACK OnSetupDirectoryDlgProc(HWND hDlgWnd, UINT msg, WPARAM w
 		default:
 			return FALSE;
 		}
-
+#if 0
 		if (button_pressed) {
 			wchar_t *filename;
 			if (!IsWindowEnabled(GetDlgItem(hDlgWnd, edit_vstore))) {
@@ -803,6 +815,7 @@ static INT_PTR CALLBACK OnSetupDirectoryDlgProc(HWND hDlgWnd, UINT msg, WPARAM w
 			free(filename);
 			return TRUE;
 		}
+#endif
 		return FALSE;
 	}
 	case WM_CLOSE:

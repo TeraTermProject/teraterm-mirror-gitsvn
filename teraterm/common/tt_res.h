@@ -146,6 +146,7 @@
 #define IDC_SCP_PATH                    2510
 #define IDC_BGIMG_EDIT                  2510
 #define IDC_ROTATE_SIZE                 2510
+#define IDC_THEME_EDIT                  2511
 #define IDC_CONFIRM_CHANGE_PASTE        2512
 #define IDC_CURSOR_CTRL_SEQ             2512
 #define IDC_LOG_ROTATE                  2512
@@ -174,6 +175,7 @@
 #define IDC_BGIMG_BUTTON                2528
 #define IDC_CLIPBOARD_ACCESS_LABEL      2529
 #define IDC_ROTATE_SIZE_TYPE            2529
+#define IDC_THEME_BUTTON                2529
 #define IDC_CLIPBOARD_ACCESS            2530
 #define IDC_ROTATE_STEP                 2530
 #define IDC_ROTATE_STEP_TEXT            2531
@@ -233,6 +235,9 @@
 #define IDC_SENDFILE_DELAYTIME_EDIT     2605
 #define IDC_SENDFILE_CHECK_4            2606
 #define IDC_SETUP_DIR_LIST              2607
+#define IDC_THEME_FILE                  2609
+#define IDC_TH_READ                     2610
+#define IDC_TH_WRITE                    2611
 #define ID_ACC_SENDBREAK                50001
 #define ID_ACC_COPY                     50002
 #define ID_ACC_NEWCONNECTION            50003
@@ -327,13 +332,13 @@
 #define ID_FILE_TERATERMMENU            52006
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         52031
-#define _APS_NEXT_CONTROL_VALUE         2608
+#define _APS_NEXT_CONTROL_VALUE         2612
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

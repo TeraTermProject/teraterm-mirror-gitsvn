@@ -39,6 +39,7 @@ extern "C" {
 //<!--by AKASI
 void BGInitialize(BOOL initialize_once);
 void BGSetupPrimary(BOOL);
+void BGWriteThemeFile(const wchar_t *theme_file);
 
 void BGExchangeColor(void);
 
@@ -46,7 +47,7 @@ void BGOnSettingChange(void);
 void BGOnEnterSizeMove(void);
 void BGOnExitSizeMove(void);
 
-extern BOOL BGEnable;
+//extern BOOL BGEnable;
 //-->
 
 void InitDisp(void);

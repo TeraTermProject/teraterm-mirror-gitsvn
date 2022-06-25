@@ -649,7 +649,9 @@ void CVisualPropPageDlg::OnInitDialog()
 		{ IDC_ALPHABLEND, "DLG_TAB_VISUAL_ALPHA" },
 		{ IDC_ALPHA_BLEND_ACTIVE_LABEL, "DLG_TAB_VISUAL_ALPHA_ACTIVE" },
 		{ IDC_ALPHA_BLEND_INACTIVE_LABEL, "DLG_TAB_VISUAL_ALPHA_INACTIVE" },
+#if 0
 		{ IDC_ETERM_LOOKFEEL, "DLG_TAB_VISUAL_ETERM" },
+#endif
 		{ IDC_MIXED_THEME_FILE, "DLG_TAB_VISUAL_BGMIXED_THEMEFILE" },
 		{ IDC_BGIMG_CHECK, "DLG_TAB_VISUAL_BGIMG" },
 		{ IDC_BGIMG_BRIGHTNESS, "DLG_TAB_VISUAL_BGIMG_BRIGHTNESS" },
@@ -694,6 +696,22 @@ void CVisualPropPageDlg::OnInitDialog()
 	EnableDlgItem(IDC_ALPHA_BLEND_INACTIVE, isLayeredWindowSupported);
 	EnableDlgItem(IDC_ALPHA_BLEND_INACTIVE_TRACKBAR, isLayeredWindowSupported);
 
+	{
+		SendDlgItemMessageA(IDC_THEME_FILE, CB_ADDSTRING, 0, (LPARAM)"使用しない");
+		SendDlgItemMessageA(IDC_THEME_FILE, CB_ADDSTRING, 1, (LPARAM)"固定テーマ(テーマファイル指定)");
+		SendDlgItemMessageA(IDC_THEME_FILE, CB_ADDSTRING, 2, (LPARAM)"ランダムテーマ");
+		int sel = ts.EtermLookfeel.BGEnable;
+		if (sel < 0) sel = 0;
+		if (sel > 2) sel = 2;
+		SendDlgItemMessageA(IDC_THEME_FILE, CB_SETCURSEL, sel, 0);
+		BOOL enable = (sel == 1) ? TRUE : FALSE;
+		EnableDlgItem(IDC_THEME_EDIT, enable);
+		EnableDlgItem(IDC_THEME_BUTTON, enable);
+
+		SetDlgItemTextW(IDC_THEME_EDIT, ts.EtermLookfeel.BGThemeFileW);
+	}
+
+#if 0
 	// (2)[BG] BGEnable
 	SetCheck(IDC_ETERM_LOOKFEEL, ts.EtermLookfeel.BGEnable);
 
@@ -743,6 +761,7 @@ void CVisualPropPageDlg::OnInitDialog()
 
 		EnableDlgItem(IDC_MIXED_THEME_FILE, FALSE);
 	}
+#endif
 
 	// (3)Mouse cursor type
 	int sel = 0;
@@ -873,7 +892,16 @@ BOOL CVisualPropPageDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	int sel;
 
 	switch (wParam) {
-	case IDC_ETERM_LOOKFEEL:
+		case IDC_THEME_FILE | (CBN_SELCHANGE << 16): {
+			int r = GetCurSel(IDC_THEME_FILE);
+			// 固定のとき、ファイル名を入力できるようにする
+			BOOL enable = (r == 1) ? TRUE : FALSE;
+			EnableDlgItem(IDC_THEME_EDIT, enable);
+			EnableDlgItem(IDC_THEME_BUTTON, enable);
+			break;
+		}
+#if 0
+		case IDC_ETERM_LOOKFEEL:
 			// チェックされたら Enable/Disable をトグルする。
 			if (GetCheck(IDC_ETERM_LOOKFEEL)) {
 				EnableDlgItem(IDC_MIXED_THEME_FILE, TRUE);
@@ -908,14 +936,12 @@ BOOL CVisualPropPageDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 				EnableDlgItem(IDC_MIXED_THEME_FILE, FALSE);
 			}
 			return TRUE;
-
 		case IDC_MIXED_THEME_FILE:
 			if (GetCheck(IDC_MIXED_THEME_FILE)) {
 				// 背景画像のチェックは外す。
 				SetCheck(IDC_BGIMG_CHECK, BST_UNCHECKED);
 			}
 			return TRUE;
-
 		case IDC_BGIMG_CHECK:
 			if (GetCheck(IDC_BGIMG_CHECK)) {
 				EnableDlgItem(IDC_BGIMG_EDIT, TRUE);
@@ -941,12 +967,48 @@ BOOL CVisualPropPageDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 				SetDlgItemInt(IDC_EDIT_BGIMG_BRIGHTNESS, BG_THEME_IMAGE_BRIGHTNESS_DEFAULT);
 			}
 			return TRUE;
+#endif
+	case IDC_THEME_BUTTON | (BN_CLICKED << 16): {
+		// テーマファイルを選択する
+		OPENFILENAMEW ofn = {};
+		wchar_t szFile[MAX_PATH];
+		wchar_t *curdir;
+		wchar_t *theme_dir;
+		hGetCurrentDirectoryW(&curdir);
+
+		if (GetFileAttributesW(ts.EtermLookfeel.BGThemeFileW) != INVALID_FILE_ATTRIBUTES) {
+			wcsncpy_s(szFile, _countof(szFile), ts.EtermLookfeel.BGThemeFileW, _TRUNCATE);
+		} else {
+			szFile[0] = 0;
+		}
+
+		aswprintf(&theme_dir, L"%s\\theme", ts.HomeDirW);
+
+		ofn.lStructSize = get_OPENFILENAME_SIZEW();
+		ofn.hwndOwner = GetSafeHwnd();
+		ofn.lpstrFilter = L"Theme Files(*.ini)\0*.ini\0All Files(*.*)\0*.*\0";
+		ofn.lpstrFile = szFile;
+		ofn.nMaxFile = _countof(szFile);
+		ofn.lpstrTitle = L"select theme file";
+		ofn.lpstrInitialDir = theme_dir;
+		ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+		BOOL ok = GetOpenFileNameW(&ofn);
+		SetCurrentDirectoryW(curdir);
+		free(curdir);
+		free(theme_dir);
+		if (ok) {
+			SetDlgItemTextW(IDC_THEME_EDIT, szFile);
+		}
+		return TRUE;
+	}
 
 		case IDC_BGIMG_BUTTON | (BN_CLICKED << 16):
 			// 背景画像をダイアログで指定する。
 			{
 				OPENFILENAMEW ofn;
 				wchar_t szFile[MAX_PATH];
+				wchar_t *curdir;
+				hGetCurrentDirectoryW(&curdir);
 
 				memset(&ofn, 0, sizeof(ofn));
 				memset(szFile, 0, sizeof(szFile));
@@ -958,6 +1020,8 @@ BOOL CVisualPropPageDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 				ofn.lpstrTitle = L"select image file";
 				ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
 				BOOL ok = GetOpenFileNameW(&ofn);
+				SetCurrentDirectoryW(curdir);
+				free(curdir);
 				if (ok) {
 					SetDlgItemTextW(IDC_BGIMG_EDIT, szFile);
 				}
@@ -1119,6 +1183,7 @@ void CVisualPropPageDlg::OnOK()
 	}
 
 	// (2)
+#if 0
 	// グローバル変数 BGEnable を直接書き換えると、プログラムが落ちることが
 	// あるのでコピーを修正するのみとする。(2005.4.24 yutaka)
 	if (ts.EtermLookfeel.BGEnable != GetCheck(IDC_ETERM_LOOKFEEL)) {
@@ -1157,6 +1222,40 @@ void CVisualPropPageDlg::OnOK()
 	} else {
 		// BGが無効の場合はデフォルトに戻しておく。
 		strncpy_s(ts.EtermLookfeel.BGThemeFile, BG_THEME_IMAGEFILE_DEFAULT, sizeof(ts.EtermLookfeel.BGThemeFile));
+	}
+#endif
+	{
+		int r = GetCurSel(IDC_THEME_FILE);
+		switch (r) {
+		default:
+			assert(FALSE);
+			// fall through
+		case 0:
+			ts.EtermLookfeel.BGEnable = 0;
+			break;
+		case 1: {
+			// テーマファイル指定
+			ts.EtermLookfeel.BGEnable = 1;
+
+			wchar_t* theme_file;
+			hGetDlgItemTextW(m_hWnd, IDC_THEME_EDIT, &theme_file);
+
+			if (ts.EtermLookfeel.BGThemeFileW != NULL) {
+				free(ts.EtermLookfeel.BGThemeFileW);
+			}
+			ts.EtermLookfeel.BGThemeFileW = theme_file;
+			break;
+		}
+		case 2: {
+			// ランダムテーマ
+			ts.EtermLookfeel.BGEnable = 2;
+			if (ts.EtermLookfeel.BGThemeFileW != NULL) {
+				free(ts.EtermLookfeel.BGThemeFileW);
+			}
+			ts.EtermLookfeel.BGThemeFileW = NULL;
+			break;
+		}
+		}
 	}
 
 

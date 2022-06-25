@@ -2803,7 +2803,7 @@ BOOL CVTWindow::OnDeviceChange(UINT nEventType, DWORD_PTR dwData)
 LRESULT CVTWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 {
 #ifdef ALPHABLEND_TYPE2
-	if(BGEnable && ts.EtermLookfeel.BGNoCopyBits) {
+	if(ts.EtermLookfeel.BGEnable && ts.EtermLookfeel.BGNoCopyBits) {
 		((WINDOWPOS*)lParam)->flags |= SWP_NOCOPYBITS;
 	}
 #endif

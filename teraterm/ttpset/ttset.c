@@ -740,10 +740,47 @@ static void WriteCygtermConfFile(PTTSet ts)
  */
 static void DispReadIni(const wchar_t *FName, PTTSet ts)
 {
+	wchar_t *base;
+	ts->EtermLookfeel.BGEnable = GetPrivateProfileInt(BG_SECTION, "BGEnable", 0, FName);
 	ts->EtermLookfeel.BGUseAlphaBlendAPI = GetOnOff(BG_SECTION, "BGUseAlphaBlendAPI", FName, TRUE);
 	ts->EtermLookfeel.BGNoFrame = GetOnOff(BG_SECTION, "BGNoFrame", FName, FALSE);
 	ts->EtermLookfeel.BGFastSizeMove = GetOnOff(BG_SECTION, "BGFastSizeMove", FName, TRUE);
 	ts->EtermLookfeel.BGNoCopyBits = GetOnOff(BG_SECTION, "BGFlickerlessMove", FName, TRUE);
+	if (ts->EtermLookfeel.BGSPIPathW != NULL) {
+		free(ts->EtermLookfeel.BGSPIPathW);
+	}
+	hGetPrivateProfileStringW(BG_SECTIONW, L"BGSPIPath", L"plugin", FName, &base);
+	if (base[0] == 0) {
+		free(base);
+		ts->EtermLookfeel.BGSPIPathW = NULL;
+	}
+	else {
+		wchar_t *full;
+		if (IsRelativePathW(base)) {
+			aswprintf(&full, L"%s\\%s", ts->HomeDirW, base);
+			ts->EtermLookfeel.BGSPIPathW = full;
+			free(base);
+		}
+		else {
+			ts->EtermLookfeel.BGSPIPathW = base;
+		}
+	}
+	hGetPrivateProfileStringW(BG_SECTIONW, L"BGThemeFile", L"", FName, &base);
+	if (base[0] == 0) {
+		free(base);
+		ts->EtermLookfeel.BGThemeFileW = NULL;
+	}
+	else {
+		if (IsRelativePathW(base)) {
+			wchar_t *full;
+			aswprintf(&full, L"%s\\%s", ts->HomeDirW, base);
+			ts->EtermLookfeel.BGThemeFileW = full;
+			free(base);
+		}
+		else {
+			ts->EtermLookfeel.BGThemeFileW = base;
+		}
+	}
 }
 
 /**
@@ -752,10 +789,14 @@ static void DispReadIni(const wchar_t *FName, PTTSet ts)
  */
 static void DispWriteIni(const wchar_t *FName, PTTSet ts)
 {
+	// Eterm lookfeel alphablend (theme file)
+	WriteInt(BG_SECTION, "BGEnable", FName, ts->EtermLookfeel.BGEnable);
+	WritePrivateProfileStringW(BG_SECTIONW, L"BGThemeFile",
+	                          ts->EtermLookfeel.BGThemeFileW, FName);
 	WriteOnOff(BG_SECTION, "BGUseAlphaBlendAPI", FName,
 	           ts->EtermLookfeel.BGUseAlphaBlendAPI);
-	WritePrivateProfileString(BG_SECTION, "BGSPIPath",
-	                          ts->EtermLookfeel.BGSPIPath, FName);
+	WritePrivateProfileStringW(BG_SECTIONW, L"BGSPIPath",
+	                          ts->EtermLookfeel.BGSPIPathW, FName);
 	WriteOnOff(BG_SECTION, "BGFastSizeMove", FName,
 	           ts->EtermLookfeel.BGFastSizeMove);
 	WriteOnOff(BG_SECTION, "BGFlickerlessMove", FName,
@@ -3108,12 +3149,6 @@ void PASCAL WriteIniFile(const wchar_t *FName, PTTSet ts)
 
 	DispWriteIni(FName, ts);
 
-	// Eterm lookfeel alphablend (2005.4.24 yutaka)
-	WriteOnOff(BG_SECTION, "BGEnable", FName,
-	           ts->EtermLookfeel.BGEnable);
-	WritePrivateProfileString(BG_SECTION, "BGThemeFile",
-	                          ts->EtermLookfeel.BGThemeFile, FName);
-
 	// themeフォルダを作る
 	{
 		wchar_t *theme_folder = NULL;
@@ -3124,6 +3159,7 @@ void PASCAL WriteIniFile(const wchar_t *FName, PTTSet ts)
 
 	// テーマファイルに保存("theme\\ImageFile.INI")
 	//		TODO BGThemeFileはチェックしなくてよい?
+#if 0
 	{
 		wchar_t *theme_file = NULL;
 		aswprintf(&theme_file, L"%s\\%hs", ts->HomeDirW, BG_THEME_IMAGEFILE);
@@ -3132,9 +3168,7 @@ void PASCAL WriteIniFile(const wchar_t *FName, PTTSet ts)
 		WriteInt(BG_SECTION, BG_THEME_IMAGE_BRIGHTNESS2, theme_file, ts->BGImgBrightness);
 		free(theme_file);
 	}
-
-	WriteOnOff(BG_SECTION, "BGIgnoreThemeFile", FName,
-		ts->EtermLookfeel.BGIgnoreThemeFile);
+#endif
 
 #ifdef USE_NORMAL_BGCOLOR
 	// UseNormalBGColor

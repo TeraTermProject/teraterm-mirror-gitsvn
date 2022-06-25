@@ -696,6 +696,7 @@ void CVisualPropPageDlg::OnInitDialog()
 	EnableDlgItem(IDC_ALPHA_BLEND_INACTIVE, isLayeredWindowSupported);
 	EnableDlgItem(IDC_ALPHA_BLEND_INACTIVE_TRACKBAR, isLayeredWindowSupported);
 
+	// (2) theme file
 	{
 		SendDlgItemMessageA(IDC_THEME_FILE, CB_ADDSTRING, 0, (LPARAM)"使用しない");
 		SendDlgItemMessageA(IDC_THEME_FILE, CB_ADDSTRING, 1, (LPARAM)"固定テーマ(テーマファイル指定)");
@@ -710,58 +711,6 @@ void CVisualPropPageDlg::OnInitDialog()
 
 		SetDlgItemTextW(IDC_THEME_EDIT, ts.EtermLookfeel.BGThemeFileW);
 	}
-
-#if 0
-	// (2)[BG] BGEnable
-	SetCheck(IDC_ETERM_LOOKFEEL, ts.EtermLookfeel.BGEnable);
-
-	// Eterm look-feelの背景画像指定。
-	SetDlgItemTextA(IDC_BGIMG_EDIT, ts.BGImageFilePath);
-
-	SetDlgItemNum(IDC_EDIT_BGIMG_BRIGHTNESS, ts.BGImgBrightness);
-
-	// BGEnable関係なく、チェックボックスを付ける。
-	if (strcmp(ts.EtermLookfeel.BGThemeFile, BG_THEME_IMAGEFILE) == 0) {
-		SetCheck(IDC_BGIMG_CHECK, BST_CHECKED);
-	} else {
-		SetCheck(IDC_BGIMG_CHECK, BST_UNCHECKED);
-	}
-	// テーマファイルを無視する場合は壁紙と混合しない。
-	if (ts.EtermLookfeel.BGIgnoreThemeFile) {
-		SetCheck(IDC_MIXED_THEME_FILE, BST_UNCHECKED);
-	} else {
-		SetCheck(IDC_MIXED_THEME_FILE, BST_CHECKED);
-	}
-
-	if (ts.EtermLookfeel.BGEnable) {
-		EnableDlgItem(IDC_BGIMG_CHECK, TRUE);
-		EnableDlgItem(IDC_MIXED_THEME_FILE, TRUE);
-
-		if (strcmp(ts.EtermLookfeel.BGThemeFile, BG_THEME_IMAGEFILE) == 0) {
-			EnableDlgItem(IDC_BGIMG_EDIT, TRUE);
-			EnableDlgItem(IDC_BGIMG_BUTTON, TRUE);
-
-			EnableDlgItem(IDC_BGIMG_BRIGHTNESS, TRUE);
-			EnableDlgItem(IDC_EDIT_BGIMG_BRIGHTNESS, TRUE);
-		} else {
-			EnableDlgItem(IDC_BGIMG_EDIT, FALSE);
-			EnableDlgItem(IDC_BGIMG_BUTTON, FALSE);
-
-			EnableDlgItem(IDC_BGIMG_BRIGHTNESS, FALSE);
-			EnableDlgItem(IDC_EDIT_BGIMG_BRIGHTNESS, FALSE);
-		}
-
-	} else {
-		EnableDlgItem(IDC_BGIMG_CHECK, FALSE);
-		EnableDlgItem(IDC_BGIMG_EDIT, FALSE);
-		EnableDlgItem(IDC_BGIMG_BUTTON, FALSE);
-
-		EnableDlgItem(IDC_BGIMG_BRIGHTNESS, FALSE);
-		EnableDlgItem(IDC_EDIT_BGIMG_BRIGHTNESS, FALSE);
-
-		EnableDlgItem(IDC_MIXED_THEME_FILE, FALSE);
-	}
-#endif
 
 	// (3)Mouse cursor type
 	int sel = 0;
@@ -900,74 +849,6 @@ BOOL CVisualPropPageDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 			EnableDlgItem(IDC_THEME_BUTTON, enable);
 			break;
 		}
-#if 0
-		case IDC_ETERM_LOOKFEEL:
-			// チェックされたら Enable/Disable をトグルする。
-			if (GetCheck(IDC_ETERM_LOOKFEEL)) {
-				EnableDlgItem(IDC_MIXED_THEME_FILE, TRUE);
-				EnableDlgItem(IDC_BGIMG_CHECK, TRUE);
-				if (GetCheck(IDC_BGIMG_CHECK)) {
-					EnableDlgItem(IDC_BGIMG_EDIT, TRUE);
-					EnableDlgItem(IDC_BGIMG_BUTTON, TRUE);
-
-					EnableDlgItem(IDC_BGIMG_BRIGHTNESS, TRUE);
-					EnableDlgItem(IDC_EDIT_BGIMG_BRIGHTNESS, TRUE);
-				} else {
-					EnableDlgItem(IDC_BGIMG_EDIT, FALSE);
-					EnableDlgItem(IDC_BGIMG_BUTTON, FALSE);
-
-					EnableDlgItem(IDC_BGIMG_BRIGHTNESS, FALSE);
-					EnableDlgItem(IDC_EDIT_BGIMG_BRIGHTNESS, FALSE);
-				}
-			} else {
-				EnableDlgItem(IDC_BGIMG_CHECK, FALSE);
-				EnableDlgItem(IDC_BGIMG_EDIT, FALSE);
-				EnableDlgItem(IDC_BGIMG_BUTTON, FALSE);
-
-				EnableDlgItem(IDC_BGIMG_BRIGHTNESS, FALSE);
-				EnableDlgItem(IDC_EDIT_BGIMG_BRIGHTNESS, FALSE);
-
-				// 無効化されたら、BGThemeFile を元に戻す。
-				strncpy_s(ts.EtermLookfeel.BGThemeFile, BG_THEME_IMAGEFILE_DEFAULT, sizeof(ts.EtermLookfeel.BGThemeFile));
-				// 背景画像も無効化する。
-				SetDlgItemText(IDC_BGIMG_EDIT, "");
-				SetDlgItemInt(IDC_EDIT_BGIMG_BRIGHTNESS, BG_THEME_IMAGE_BRIGHTNESS_DEFAULT);
-
-				EnableDlgItem(IDC_MIXED_THEME_FILE, FALSE);
-			}
-			return TRUE;
-		case IDC_MIXED_THEME_FILE:
-			if (GetCheck(IDC_MIXED_THEME_FILE)) {
-				// 背景画像のチェックは外す。
-				SetCheck(IDC_BGIMG_CHECK, BST_UNCHECKED);
-			}
-			return TRUE;
-		case IDC_BGIMG_CHECK:
-			if (GetCheck(IDC_BGIMG_CHECK)) {
-				EnableDlgItem(IDC_BGIMG_EDIT, TRUE);
-				EnableDlgItem(IDC_BGIMG_BUTTON, TRUE);
-
-				EnableDlgItem(IDC_BGIMG_BRIGHTNESS, TRUE);
-				EnableDlgItem(IDC_EDIT_BGIMG_BRIGHTNESS, TRUE);
-
-				strncpy_s(ts.EtermLookfeel.BGThemeFile, BG_THEME_IMAGEFILE, sizeof(ts.EtermLookfeel.BGThemeFile));
-				// 混合のチェックは外す。
-				SetCheck(IDC_MIXED_THEME_FILE, BST_UNCHECKED);
-			} else {
-				EnableDlgItem(IDC_BGIMG_EDIT, FALSE);
-				EnableDlgItem(IDC_BGIMG_BUTTON, FALSE);
-
-				EnableDlgItem(IDC_BGIMG_BRIGHTNESS, FALSE);
-				EnableDlgItem(IDC_EDIT_BGIMG_BRIGHTNESS, FALSE);
-
-				// 無効化されたら、BGThemeFile を元に戻す。
-				strncpy_s(ts.EtermLookfeel.BGThemeFile, BG_THEME_IMAGEFILE_DEFAULT, sizeof(ts.EtermLookfeel.BGThemeFile));
-				// 背景画像も無効化する。
-				SetDlgItemText(IDC_BGIMG_EDIT, "");
-				SetDlgItemInt(IDC_EDIT_BGIMG_BRIGHTNESS, BG_THEME_IMAGE_BRIGHTNESS_DEFAULT);
-			}
-			return TRUE;
-#endif
 	case IDC_THEME_BUTTON | (BN_CLICKED << 16): {
 		// テーマファイルを選択する
 		OPENFILENAMEW ofn = {};
@@ -1182,48 +1063,7 @@ void CVisualPropPageDlg::OnOK()
 			(i > 255) ? 255 : i;
 	}
 
-	// (2)
-#if 0
-	// グローバル変数 BGEnable を直接書き換えると、プログラムが落ちることが
-	// あるのでコピーを修正するのみとする。(2005.4.24 yutaka)
-	if (ts.EtermLookfeel.BGEnable != GetCheck(IDC_ETERM_LOOKFEEL)) {
-		flag_changed = 1;
-		ts.EtermLookfeel.BGEnable = GetCheck(IDC_ETERM_LOOKFEEL);
-	}
-	if (ts.EtermLookfeel.BGEnable) {
-		GetDlgItemTextA(IDC_BGIMG_EDIT, ts.BGImageFilePath, sizeof(ts.BGImageFilePath));
-	} else {
-		strncpy_s(ts.BGImageFilePath, sizeof(ts.BGImageFilePath), "%SystemRoot%\\Web\\Wallpaper\\*.bmp", _TRUNCATE);
-	}
-
-	GetDlgItemTextA(IDC_EDIT_BGIMG_BRIGHTNESS, buf, sizeof(buf));
-	if (isdigit(buf[0])) {
-		int i = atoi(buf);
-		ts.BGImgBrightness =
-			(i < 0) ? 0 :
-			(i > 255) ? 255 : i;
-	}
-
-	// テーマファイルを最終設定する。
-	if (ts.EtermLookfeel.BGEnable) {
-		if (GetCheck(IDC_BGIMG_CHECK)) {
-			strncpy_s(ts.EtermLookfeel.BGThemeFile, BG_THEME_IMAGEFILE, sizeof(ts.EtermLookfeel.BGThemeFile));
-		} else {
-			strncpy_s(ts.EtermLookfeel.BGThemeFile, BG_THEME_IMAGEFILE_DEFAULT, sizeof(ts.EtermLookfeel.BGThemeFile));
-		}
-		if (GetCheck(IDC_MIXED_THEME_FILE)) {
-			// 壁紙と混合の場合、デフォルトに戻しておく。
-			ts.EtermLookfeel.BGIgnoreThemeFile = FALSE;
-		} else {
-			// テーマファイルを無視する。
-			ts.EtermLookfeel.BGIgnoreThemeFile = TRUE;
-		}
-
-	} else {
-		// BGが無効の場合はデフォルトに戻しておく。
-		strncpy_s(ts.EtermLookfeel.BGThemeFile, BG_THEME_IMAGEFILE_DEFAULT, sizeof(ts.EtermLookfeel.BGThemeFile));
-	}
-#endif
+	// (2) テーマファイル選択
 	{
 		int r = GetCurSel(IDC_THEME_FILE);
 		switch (r) {

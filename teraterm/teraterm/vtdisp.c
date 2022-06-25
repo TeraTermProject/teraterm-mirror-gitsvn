@@ -456,16 +456,6 @@ static void RandomFile(const char *filespec_src,char *filename, int destlen)
     strncpy_s(filename,destlen,tmp,_TRUNCATE);
   }
 
-#if 0
-  // アドホックではあるが、ImageFile.INIなら別名にする。
-  // ImageFile.INIはテーマファイルとして使えないため。
-  if (strcmp(filespec_src, BG_THEME_IMAGEFILE_DEFAULT) == 0) {
-	  if (strcmp(fd.cFileName, BG_THEME_IMAGEFILE_NAME) == 0) {
-		  _snprintf_s(fd.cFileName, sizeof(fd.cFileName), _TRUNCATE, "%s", BG_THEME_THEMEFILE_SCALE);
-	  }
-  }
-#endif
-
   strncat_s(filename,destlen,fd.cFileName,_TRUNCATE);
 }
 
@@ -1497,47 +1487,6 @@ void BGInitialize(BOOL initialize_once)
 	BGEnable = ts.EtermLookfeel.BGEnable;
 	if (!BGEnable)
 		return;
-
-#if 0
-	// BG が有効かチェック
-	//  空の場合のみ、ディスクから読む。BGInitialize()が Tera Term 起動時以外にも、
-	//  Additional settings から呼び出されることがあるため。
-	if (ts.EtermLookfeel.BGThemeFile[0] == '\0') {
-		ts.EtermLookfeel.BGEnable = BGEnable = BGGetOnOff("BGEnable", FALSE, ts.SetupFNameW);
-	}
-	else {
-		BGEnable = BGGetOnOff("BGEnable", FALSE, ts.SetupFNameW);
-	}
-
-	hGetPrivateProfileStringW(BG_SECTIONW, L"BGSPIPath", L"plugin", ts.SetupFNameW, &ts.EtermLookfeel.BGSPIPathW);
-	WideCharToACP_t(ts.EtermLookfeel.BGSPIPathW, ts.EtermLookfeel.BGSPIPath, sizeof(ts.EtermLookfeel.BGSPIPath));
-
-	if (ts.EtermLookfeel.BGThemeFile[0] == '\0') {
-		wchar_t *theme_imagefile;
-
-		//コンフィグファイル(テーマファイル)の決定
-		hGetPrivateProfileStringW(BG_SECTIONW, L"BGThemeFile", L"", ts.SetupFNameW, &ts.EtermLookfeel.BGThemeFileW);
-		WideCharToACP_t(ts.EtermLookfeel.BGThemeFileW, ts.EtermLookfeel.BGThemeFile, sizeof(ts.EtermLookfeel.BGThemeFile));
-
-		// テーマファイルImageFile.INIから
-		aswprintf(&theme_imagefile, L"%s\\%hs", ts.HomeDirW, BG_THEME_IMAGEFILE);
-
-		// 使われていない、不要
-		// 背景画像の明るさの読み込み。
-		// BGSrc1Alpha と BGSrc2Alphaは同値として扱う。
-		ts.BGImgBrightness =
-			GetPrivateProfileIntW(BG_SECTIONW, BG_THEME_IMAGE_BRIGHTNESS1W, BG_THEME_IMAGE_BRIGHTNESS_DEFAULT, theme_imagefile);
-
-		free(theme_imagefile);
-	}
-
-	// BGEnableが真でも、initialize_once == FALSEの場合は初期化をしない。
-	// Tera Termの起動時のみに初期化する。
-	if (initialize_once) {
-		// Tera Term起動時に一度だけ読む。
-		ts.EtermLookfeel.BGIgnoreThemeFile = BGGetOnOff("BGIgnoreThemeFile", FALSE, ts.SetupFNameW);
-	}
-#endif
 
 	//乱数初期化
 	// add cast (2006.2.18 yutaka)

@@ -205,7 +205,62 @@ static BOOL (WINAPI *BGAlphaBlend)(HDC,int,int,int,int,HDC,int,int,int,int,BLEND
 static HBITMAP GetBitmapHandle(const char *File);
 
 
-//便利関数☆
+typedef struct {
+	BG_PATTERN id;
+	const char *str;
+} BG_PATTERN_ST;
+
+static const BG_PATTERN_ST *GetBGPatternList(int index)
+{
+	static const BG_PATTERN_ST bg_pattern_list[] = {
+		{ BG_STRETCH, "stretch" },
+		{ BG_TILE, "tile" },
+		{ BG_CENTER, "center" },
+		{ BG_FIT_WIDTH, "fit_width" },
+		{ BG_FIT_HEIGHT, "fit_height" },
+		{ BG_AUTOFIT, "autofit" },
+		{ BG_AUTOFILL, "autofill" },
+	};
+
+	if (index >= _countof(bg_pattern_list)) {
+		return NULL;
+	}
+	return &bg_pattern_list[index];
+}
+
+static const char *GetBGPatternStr(BG_PATTERN id)
+{
+	int index;
+	for (index = 0;; index++) {
+		const BG_PATTERN_ST *st = GetBGPatternList(index);
+		if (st == NULL) {
+			// 見つからない
+			st = GetBGPatternList(0);
+			return st->str;
+		}
+		if (st->id == id) {
+			return st->str;
+		}
+	}
+}
+
+static BOOL GetBGPatternID(const char *str, BG_PATTERN *pattern)
+{
+	int index;
+	for (index = 0;; index++) {
+		const BG_PATTERN_ST *st = GetBGPatternList(index);
+		if (st == NULL) {
+			// 見つからない
+			st = GetBGPatternList(0);
+			*pattern = st->id;
+			return FALSE;
+		}
+		if (_stricmp(st->str, str) == 0) {
+			*pattern = st->id;
+			return TRUE;
+		}
+	}
+}
 
 // LoadImage() しか使えない環境かどうかを判別する。
 // LoadImage()では .bmp 以外の画像ファイルが扱えないので要注意。
@@ -1285,9 +1340,21 @@ static BOOL BGGetOnOff(const char *name, BOOL def, const wchar_t *file)
 
 static BG_PATTERN BGGetPattern(const char *name, BG_PATTERN def, const wchar_t *file)
 {
+#if 0
 	static const char *strList[6] = {"stretch", "tile", "center", "fitwidth", "fitheight", "autofit"};
 
 	return BGGetStrIndex(name, def, file, strList, 6);
+#endif
+	BG_PATTERN retval;
+	char str[64];
+	GetPrivateProfileStringAFileW(BG_SECTION, name, "", str, _countof(str), file);
+	if (str[0] == 0) {
+		return def;
+	}
+	if (GetBGPatternID(str, &retval) == FALSE) {
+		retval = def;
+	}
+	return retval;
 }
 
 static BG_TYPE BGGetType(const char *name, BG_TYPE def, const wchar_t *file)
@@ -1434,6 +1501,41 @@ static void BGReadIniFile(const wchar_t *file)
 	// カレントフォルダを元に戻す
 	SetCurrentDirectoryW(prevDir);
 	free(prevDir);
+}
+
+void WriteInt3(const char *Sect, const char *Key, const wchar_t *FName,
+			   int i1, int i2, int i3)
+{
+	char Temp[96];
+	_snprintf_s(Temp, sizeof(Temp), _TRUNCATE, "%d,%d,%d",
+	            i1, i2,i3);
+	WritePrivateProfileStringAFileW(Sect, Key, Temp, FName);
+}
+
+void WriteCOLORREF(const char *Sect, const char *Key, const wchar_t *FName, COLORREF color)
+{
+	int red = color & 0xff;
+	int green = (color >> 8) & 0xff;
+	int blue = (color >> 16) & 0xff;
+
+	WriteInt3(Sect, Key, FName, red, green, blue);
+}
+
+/**
+ *	テーマファイルの書き込み
+ */
+static void BGWriteIniFile(const wchar_t *file)
+{
+	WritePrivateProfileStringAFileW(BG_SECTION, BG_DESTFILE, BGDest.file, file);
+	WritePrivateProfileStringAFileW(BG_SECTION, "BGDestType",
+									BGDest.type == BG_PICTURE ? "picture" : "color", file);
+	WriteCOLORREF(BG_SECTION, "BGDestColor", file, BGDest.color);
+	WritePrivateProfileStringAFileW(BG_SECTION, "BGDestPattern", GetBGPatternStr(BGDest.pattern), file);
+
+	WritePrivateProfileIntAFileW(BG_SECTION, "BGSrc1Alpha", BGSrc1.alpha, file);
+
+	WritePrivateProfileIntAFileW(BG_SECTION, "BGSrc2Alpha", BGSrc2.alpha, file);
+	WriteCOLORREF(BG_SECTION, "BGSrc2Color", file, BGSrc2.color);
 }
 
 static void BGDestruct(void)
@@ -3898,4 +4000,308 @@ int DispFindClosestColor(int red, int green, int blue)
 		color ^= 8;
 	}
 	return color;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+#include "tt_res.h"
+#include "dlglib.h"
+#include "tipwin2.h"
+#include "helpid.h"
+
+typedef struct _FontPPData {
+	HINSTANCE hInst;
+	TTTSet *pts;
+	DLGTEMPLATE *dlg_templ;
+	wchar_t *target_file;
+	TipWin2 *tipwin;
+} ThemeEditorData;
+
+static void SetWindowTextColor(HWND hWnd, COLORREF color)
+{
+	char str[32];
+	sprintf(str, "%02x%02x%02x", GetRValue(color), GetGValue(color), GetBValue(color));
+	SetWindowTextA(hWnd, str);
+}
+
+static void SetDlgItemTextColor(HWND hDlg, int ID, COLORREF color)
+{
+	SetWindowTextColor(GetDlgItem(hDlg, ID), color);
+}
+
+static COLORREF GetWindowTextColor(HWND hWnd)
+{
+	char str[32];
+	unsigned int r, g, b;
+	char elem[3];
+
+	GetWindowTextA(hWnd, str, _countof(str));
+
+	memcpy(elem, &str[0], 2);
+	elem[2] = 0;
+	r = 0;
+	sscanf(elem, "%x", &r);
+
+	memcpy(elem, &str[2], 2);
+	elem[2] = 0;
+	g = 0;
+	sscanf(elem, "%x", &g);
+
+	memcpy(elem, &str[4], 2);
+	elem[2] = 0;
+	b = 0;
+	sscanf(elem, "%x", &b);
+
+	return RGB(r, g, b);
+}
+
+static COLORREF GetDlgItemTextColor(HWND hDlg, int ID)
+{
+	return GetWindowTextColor(GetDlgItem(hDlg, ID));
+}
+
+static void ResetControls(HWND hWnd, ThemeEditorData *dlg_data)
+{
+	SendDlgItemMessage(hWnd, IDC_BGIMG_CHECK, BM_SETCHECK, (BGDest.type == BG_PICTURE) ? TRUE : FALSE, 0);
+	SetDlgItemTextA(hWnd, IDC_BGIMG_EDIT, BGDest.file);
+	SetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS4, BGDest.color);
+	{
+		int count = SendDlgItemMessageA(hWnd, IDC_COMBO1, CB_GETCOUNT, 0, 0);
+		int sel = 0;
+		int i;
+		for (i = 0; i < count; i++) {
+			BG_PATTERN pattern = (BG_PATTERN)SendDlgItemMessageW(hWnd, IDC_COMBO1, CB_GETITEMDATA, i, 0);
+			if (pattern == BGDest.pattern) {
+				sel = i;
+				break;
+			}
+		}
+		SendDlgItemMessage(hWnd, IDC_COMBO1, CB_SETCURSEL, sel, 0);
+	}
+
+
+	SendDlgItemMessage(hWnd, IDC_MIXED_THEME_FILE, BM_SETCHECK, BGSrc1.alpha != 0, 0);
+	SetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS3, BGSrc1.alpha, FALSE);
+
+	SendDlgItemMessage(hWnd, IDC_MIXED_THEME_FILE2, BM_SETCHECK, BGSrc2.alpha != 0, 0);
+	SetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS2, BGSrc2.alpha, FALSE);
+	SetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS, BGSrc2.color);
+}
+
+static INT_PTR CALLBACK Proc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+	static const DlgTextInfo TextInfos[] = {
+		{0, "DLG_GEN_TITLE"},
+	};
+	ThemeEditorData *dlg_data = (ThemeEditorData *)GetWindowLongPtr(hWnd, DWLP_USER);
+	TTTSet *ts = dlg_data == NULL ? NULL : dlg_data->pts;
+
+	switch (msg) {
+		case WM_INITDIALOG: {
+			int i;
+			dlg_data = (ThemeEditorData *)(((PROPSHEETPAGEW_V1 *)lp)->lParam);
+			ts = dlg_data->pts;
+			SetWindowLongPtr(hWnd, DWLP_USER, (LONG_PTR)dlg_data);
+
+			dlg_data->tipwin = TipWin2Create(NULL, hWnd);
+			TipWin2SetTextW(dlg_data->tipwin, IDC_BGIMG_EDIT2,
+							L"いま表示されているテーマファイル名"
+				);
+			TipWin2SetTextW(dlg_data->tipwin, IDC_BUTTON1,
+							L"target file を再読み込みする\n"
+							L"将来は、任意のテーマファイルを読み込めるようにする"
+				);
+			TipWin2SetTextW(dlg_data->tipwin, IDC_BUTTON3,
+							L"現在のダイアログの状態をテーマファイルに書き込む\n"
+							L"書き込んだイファイル(テーマファイル)を\n"
+							L"「表示タブ」で読み込み指定して、「ok」押すと反映される\n"
+							L"このページの設定はこれで書き出さないと失われる\n"
+				);
+			SetDlgItemTextW(hWnd, IDC_STATIC_HELP,
+							L"次の順で合成されて、背景に表示される\n"
+							L"base\n"
+							L"↓\n"
+							L"Background Image\n"
+							L"↓\n"
+							L"wallpaper\n"
+							L"↓\n"
+							L"simple color plane"
+				);
+
+			for (i = 0;; i++) {
+				int index;
+				const BG_PATTERN_ST *st = GetBGPatternList(i);
+				if (st == NULL) {
+					break;
+				}
+				index = SendDlgItemMessageA(hWnd, IDC_COMBO1, CB_ADDSTRING, 0, (LPARAM)st->str);
+				SendDlgItemMessageW(hWnd, IDC_COMBO1, CB_SETITEMDATA, index, st->id);
+			}
+			SetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, dlg_data->target_file);
+			ResetControls(hWnd, dlg_data);
+
+			break;
+		}
+		case WM_NOTIFY: {
+			NMHDR *nmhdr = (NMHDR *)lp;
+			switch (nmhdr->code) {
+				case PSN_APPLY: {
+					TipWin2Destroy(dlg_data->tipwin);
+					dlg_data->tipwin = NULL;
+					break;
+				}
+				case PSN_HELP:
+					MessageBox(hWnd, "Tera Term", "not implimented",
+							   MB_OK | MB_ICONEXCLAMATION);
+					break;
+				default:
+					break;
+			}
+			break;
+		}
+		case WM_COMMAND: {
+			switch (wp) {
+			case IDC_BUTTON1 | (BN_CLICKED << 16): {
+				// 再読み込み
+				wchar_t *theme_file;
+				hGetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, &theme_file);
+				free(ts->EtermLookfeel.BGThemeFileW);
+				ts->EtermLookfeel.BGThemeFileW = theme_file;
+
+				BGReadIniFile(ts->EtermLookfeel.BGThemeFileW);
+				ResetControls(hWnd, dlg_data);
+				BGSetupPrimary(TRUE);
+				break;
+			}
+			case IDC_BGIMG_BUTTON | (BN_CLICKED << 16): {
+				// 画像ファイル選択
+				OPENFILENAMEW ofn = {0};
+				wchar_t bg_file[MAX_PATH];
+				wchar_t *bg_file_in;
+
+				hGetDlgItemTextW(hWnd, IDC_BGIMG_EDIT, &bg_file_in);
+				wcscpy_s(bg_file, _countof(bg_file), bg_file_in);
+				free(bg_file_in);
+
+				ofn.lStructSize = get_OPENFILENAME_SIZEW();
+				ofn.hwndOwner   = hWnd;
+				ofn.lpstrFile   = bg_file;
+				ofn.nMaxFile    = _countof(bg_file);
+				//ofn.lpstrFilter = "";
+				ofn.nFilterIndex = 1;
+				ofn.hInstance = hInst;
+				ofn.lpstrDefExt = L"jpg";
+				ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+				ofn.lpstrTitle = L"select bg image file";
+
+				if (GetOpenFileNameW(&ofn)) {
+					SetDlgItemTextW(hWnd, IDC_BGIMG_EDIT, bg_file);
+				}
+				break;
+			}
+			case IDC_BUTTON3 | (BN_CLICKED << 16): {
+				// コントロールから読み出し
+				wchar_t *theme_file_in;
+				wchar_t theme_file[MAX_PATH];
+				OPENFILENAMEW ofn = {0};
+				{
+					LRESULT checked;
+					int index;
+					checked = SendDlgItemMessageA(hWnd, IDC_BGIMG_CHECK, BM_GETCHECK, 0, 0);
+					BGDest.type = checked & BST_CHECKED ? BG_PICTURE : BG_COLOR;
+					GetDlgItemTextA(hWnd, IDC_BGIMG_EDIT, BGDest.file, sizeof(BGDest.file));
+					BGDest.color = GetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS4);
+					index = SendDlgItemMessage(hWnd, IDC_COMBO1, CB_GETCURSEL, 0, 0);
+					BGDest.pattern = (BG_PATTERN)SendDlgItemMessage(hWnd, IDC_COMBO1, CB_GETITEMDATA, index, 0);
+
+					checked = SendDlgItemMessageA(hWnd, IDC_MIXED_THEME_FILE, BM_GETCHECK, 0, 0);
+					if (checked & BST_CHECKED) {
+						BGSrc1.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS3, NULL, FALSE);
+					} else {
+						BGSrc1.alpha = 0;
+					}
+
+					checked = SendDlgItemMessageA(hWnd, IDC_MIXED_THEME_FILE2, BM_GETCHECK, 0, 0);
+					if (checked & BST_CHECKED) {
+						BGSrc2.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS, NULL, FALSE);
+					} else {
+						BGSrc2.alpha = 0;
+					}
+					BGSrc2.color = GetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS);
+				}
+
+				hGetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, &theme_file_in);
+				wcscpy_s(theme_file, _countof(theme_file), theme_file_in);
+				free(theme_file_in);
+
+				ofn.lStructSize = get_OPENFILENAME_SIZEW();
+				ofn.hwndOwner   = hWnd;
+				ofn.lpstrFile   = theme_file;
+				ofn.nMaxFile    = _countof(theme_file);
+				//ofn.lpstrFilter = "";
+				ofn.nFilterIndex = 1;
+				ofn.hInstance = hInst;
+				ofn.lpstrDefExt = L"ini";
+				ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+				ofn.lpstrTitle = L"save theme file";
+
+				if (GetSaveFileNameW(&ofn)) {
+					BGWriteIniFile(theme_file);
+				}
+				break;
+			}
+			default:
+				break;
+			}
+			break;
+		}
+		default:
+			return FALSE;
+	}
+	return FALSE;
+}
+
+static UINT CALLBACK CallBack(HWND hwnd, UINT uMsg, struct _PROPSHEETPAGEW *ppsp)
+{
+	UINT ret_val = 0;
+	(void)hwnd;
+	switch (uMsg) {
+	case PSPCB_CREATE:
+		ret_val = 1;
+		break;
+	case PSPCB_RELEASE:
+		free((void *)ppsp->pResource);
+		ppsp->pResource = NULL;
+		free((void *)ppsp->lParam);
+		ppsp->lParam = 0;
+		break;
+	default:
+		break;
+	}
+	return ret_val;
+}
+
+HPROPSHEETPAGE ThemeEditorCreate(HINSTANCE inst, TTTSet *pts)
+{
+	const int id = IDD_TABSHEET_THEME_EDITOR;
+	PROPSHEETPAGEW_V1 psp = {0};
+
+	ThemeEditorData *Param = (ThemeEditorData *)calloc(sizeof(ThemeEditorData), 1);
+	Param->target_file = _wcsdup(pts->EtermLookfeel.BGThemeFileW);
+	Param->pts = &ts;
+
+	psp.dwSize = sizeof(psp);
+	psp.dwFlags = PSP_DEFAULT | PSP_USECALLBACK | PSP_USETITLE /*| PSP_HASHELP */;
+	psp.hInstance = inst;
+	psp.pfnCallback = CallBack;
+	psp.pszTitle = L"Theme Editor";		// TODO lng ファイルに入れる
+	psp.pszTemplate = MAKEINTRESOURCEW(id);
+	psp.dwFlags |= PSP_DLGINDIRECT;
+	Param->dlg_templ = TTGetDlgTemplate(inst, MAKEINTRESOURCEA(id));
+	psp.pResource = Param->dlg_templ;
+
+	psp.pfnDlgProc = Proc;
+	psp.lParam = (LPARAM)Param;
+
+	return CreatePropertySheetPageW((LPPROPSHEETPAGEW)&psp);
 }

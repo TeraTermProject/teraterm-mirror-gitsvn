@@ -55,6 +55,7 @@
 #include "font_pp.h"
 #include "asprintf.h"
 #include "win32helper.h"
+#include "vtdisp.h"	// for ThemeEditorCreate()
 
 const mouse_cursor_t MouseCursor[] = {
 	{"ARROW", IDC_ARROW},
@@ -1691,6 +1692,8 @@ CAddSettingPropSheetDlg::CAddSettingPropSheetDlg(HINSTANCE hInstance, HWND hPare
 	page = CodingPageCreate(hInstance, &ts);
 	AddPage(page);
 	page = FontPageCreate(hInstance, &ts);
+	AddPage(page);
+	page = ThemeEditorCreate(hInstance, &ts);
 	AddPage(page);
 
 	wchar_t *title = TTGetLangStrW("Tera Term", "DLG_TABSHEET_TITLE", L"Tera Term: Additional settings", ts.UILanguageFile);

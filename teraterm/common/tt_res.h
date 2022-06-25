@@ -127,6 +127,7 @@
 #define IDC_PROTOFNAME                  2301
 #define IDD_TABSHEET_COPYPASTE          2301
 #define IDC_PROTOPROT                   2302
+#define IDD_TABSHEET_THEME_EDITOR       2302
 #define IDC_PROTOPKTNUM                 2303
 #define IDC_PROTOBYTECOUNT              2304
 #define IDC_PROTOPERCENT                2305
@@ -147,6 +148,7 @@
 #define IDC_BGIMG_EDIT                  2510
 #define IDC_ROTATE_SIZE                 2510
 #define IDC_THEME_EDIT                  2511
+#define IDC_BGIMG_EDIT2                 2511
 #define IDC_CONFIRM_CHANGE_PASTE        2512
 #define IDC_CURSOR_CTRL_SEQ             2512
 #define IDC_LOG_ROTATE                  2512
@@ -176,6 +178,7 @@
 #define IDC_CLIPBOARD_ACCESS_LABEL      2529
 #define IDC_ROTATE_SIZE_TYPE            2529
 #define IDC_THEME_BUTTON                2529
+#define IDC_BGIMG_BUTTON2               2529
 #define IDC_CLIPBOARD_ACCESS            2530
 #define IDC_ROTATE_STEP                 2530
 #define IDC_ROTATE_STEP_TEXT            2531
@@ -192,6 +195,13 @@
 #define IDC_OPT_TIMESTAMP_TYPE          2541
 #define IDC_BGIMG_BRIGHTNESS            2551
 #define IDC_EDIT_BGIMG_BRIGHTNESS       2552
+#define IDC_BGIMG_BRIGHTNESS2           2553
+#define IDC_EDIT_BGIMG_BRIGHTNESS2      2554
+#define IDC_BGIMG_BRIGHTNESS3           2555
+#define IDC_BGIMG_BRIGHTNESS4           2556
+#define IDC_EDIT_BGIMG_BRIGHTNESS3      2557
+#define IDC_EDIT_BGIMG_BRIGHTNESS4      2558
+#define IDC_BGIMG_BRIGHTNESS5           2559
 #define IDC_TRIMNLCHAR                  2564
 #define IDC_CLIPBOARD_NOTIFY            2566
 #define IDC_LIST_HIDDEN_FONTS           2567
@@ -219,6 +229,7 @@
 #define IDC_SELECT_ON_ACTIVATE          2589
 #define IDC_MIXED_THEME_FILE            2590
 #define IDC_ACCEPT_CLEAR_SBUFF          2591
+#define IDC_MIXED_THEME_FILE2           2591
 #define IDC_DEBUG_POPUP_ENABLE          2592
 #define IDC_DEBUG_POPUP_KEY1            2593
 #define IDC_DEBUG_POPUP_KEY2            2594
@@ -238,6 +249,11 @@
 #define IDC_THEME_FILE                  2609
 #define IDC_TH_READ                     2610
 #define IDC_TH_WRITE                    2611
+#define IDC_BUTTON1                     2612
+#define IDC_BUTTON2                     2613
+#define IDC_BUTTON3                     2614
+#define IDC_COMBO1                      2616
+#define IDC_STATIC_HELP                 2617
 #define ID_ACC_SENDBREAK                50001
 #define ID_ACC_COPY                     50002
 #define ID_ACC_NEWCONNECTION            50003
@@ -338,7 +354,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         52031
-#define _APS_NEXT_CONTROL_VALUE         2612
+#define _APS_NEXT_CONTROL_VALUE         2618
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

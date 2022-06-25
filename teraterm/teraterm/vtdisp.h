@@ -153,6 +153,8 @@ extern BOOL IMECompositionState;
 #define WINDOW_REFRESH  6
 #define WINDOW_TOGGLE_MAXIMIZE 7
 
+HPROPSHEETPAGE ThemeEditorCreate(HINSTANCE inst, TTTSet *pts);
+
 #ifdef __cplusplus
 }
 #endif

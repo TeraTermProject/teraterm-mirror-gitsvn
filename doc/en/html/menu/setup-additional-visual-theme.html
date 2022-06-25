@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">
+    <title>Additional settings ([Setup] メニュー)</title>
+    <META http-equiv="Content-Style-Type" content="text/css">
+    <link rel="stylesheet" href="../style.css" type="text/css">
+  </head>
+
+  <body>
+    <h1>Additional settings / "Visual/theme editor" タブ ([Setup] メニュー)</h1>
+
+    <h3>背景テーマファイル</h3>
+
+    Tera Term の背景は次のように指定する。<br>
+
+    <img src="../../../ja/html/menu/setup-additional-visual-theme.png"><br>
+
+    <a href="../setup/teraterm-win.html#eterm">テーマファイルについて(Eterm風半透明ウィンドウ)</a>
+    <dl>
+      <dt>BGPictureTone</dt>
+      <dd>
+        背景画像(Dest)にデスクトップ画像(Src1)どれぐらいブレンドするか<br>
+        BGSrc1Alpha = 255 - BGPictureTone<br>
+        0=デスクトップ画像(Src1)が100%<br>
+        255=背景画像(Dest)が100%
+      </dd>
+      <dt>BGFadeColor</dt>
+      <dd>
+        Src2の色<br>
+        BGFadeColor = BGSrc2Color
+      </dd>
+      <dt>BGFadeTone</dt>
+      <dd>DestとSrc1の合成画像に単色(Src2)をどれぐらいブレンドするか<br>
+        BGSrc2Alpha = 255 - BGFadeTone<br>
+        0=単色(Src2)が100%<br>
+        255=DestとSrc1の合成画像が100%
+      </dd>
+    </dl>
+
+  </body>
+</html>

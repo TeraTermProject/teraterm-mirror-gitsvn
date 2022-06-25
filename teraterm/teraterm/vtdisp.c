@@ -148,6 +148,9 @@ static int SRegionBottom;
 #include <stdio.h>
 #include <time.h>
 
+#include "bg_theme.h"
+
+#if 0
 typedef enum _BG_TYPE    {BG_COLOR = 0,BG_PICTURE,BG_WALLPAPER} BG_TYPE;
 typedef enum _BG_PATTERN {BG_STRETCH = 0,BG_TILE,BG_CENTER,BG_FIT_WIDTH,BG_FIT_HEIGHT,BG_AUTOFIT,BG_AUTOFILL} BG_PATTERN;
 
@@ -164,6 +167,7 @@ typedef struct _BGSrc
   char       file[MAX_PATH];
   char       fileTmp[MAX_PATH];
 }BGSrc;
+#endif
 
 static BGSrc BGDest;
 static BGSrc BGSrc1;

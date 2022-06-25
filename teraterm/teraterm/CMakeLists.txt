@@ -11,6 +11,7 @@ add_executable(
   ${PACKAGE_NAME} WIN32
   addsetting.cpp
   addsetting.h
+  bg_theme.h
   broadcast.cpp
   broadcast.h
   buffer.c

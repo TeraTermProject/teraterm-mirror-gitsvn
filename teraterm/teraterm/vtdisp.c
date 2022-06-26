@@ -1244,6 +1244,11 @@ void BGSetupPrimary(BOOL forceSetup)
 
   CopyRect(&BGPrevRect,&rect);
 
+  //壁紙 or 背景をプリロード
+  BGPreloadSrc(&BGDest);
+  BGPreloadSrc(&BGSrc1);
+  BGPreloadSrc(&BGSrc2);
+
   #ifdef _DEBUG
     OutputDebugPrintf("BGSetupPrimary : BGInSizeMove = %d\n",BGInSizeMove);
   #endif
@@ -1608,30 +1613,6 @@ void BGInitialize(BOOL initialize_once)
 		GetTempFileNameA(tempPath, "ttAK", 0, BGSrc2.fileTmp);
 	}
 
-	//設定の読み出し
-	BGReadIniFile(ts.SetupFNameW);
-
-	// コンフィグファイル(テーマファイル)の決定
-	if (ts.EtermLookfeel.BGEnable == 1 && ts.EtermLookfeel.BGThemeFileW != NULL) {
-		// テーマファイルの指定がある
-		BGReadIniFile(ts.EtermLookfeel.BGThemeFileW);
-	}
-	else {
-		// ランダムテーマ (or テーマファイルを指定がない)
-		wchar_t *theme_mask;
-		wchar_t *theme_file;
-		aswprintf(&theme_mask, L"%s\\theme\\*.ini", ts.HomeDirW);
-		theme_file = RandomFileW(theme_mask);
-		free(theme_mask);
-		BGReadIniFile(theme_file);
-		free(theme_file);
-	}
-
-	//壁紙 or 背景をプリロード
-	BGPreloadSrc(&BGDest);
-	BGPreloadSrc(&BGSrc1);
-	BGPreloadSrc(&BGSrc2);
-
 	// AlphaBlend のアドレスを読み込み
 	if (ts.EtermLookfeel.BGUseAlphaBlendAPI) {
 		if (pAlphaBlend != NULL)
@@ -1641,6 +1622,30 @@ void BGInitialize(BOOL initialize_once)
 	}
 	else {
 		BGAlphaBlend = AlphaBlendWithoutAPI;
+	}
+
+	BGLoadThemeFile(&ts);
+}
+
+void BGLoadThemeFile(TTTSet *pts)
+{
+	//設定の読み出し
+	BGReadIniFile(pts->SetupFNameW);
+
+	// コンフィグファイル(テーマファイル)の決定
+	if (pts->EtermLookfeel.BGEnable == 1 && pts->EtermLookfeel.BGThemeFileW != NULL) {
+		// テーマファイルの指定がある
+		BGReadIniFile(pts->EtermLookfeel.BGThemeFileW);
+	}
+	else {
+		// ランダムテーマ (or テーマファイルを指定がない)
+		wchar_t *theme_mask;
+		wchar_t *theme_file;
+		aswprintf(&theme_mask, L"%s\\theme\\*.ini", pts->HomeDirW);
+		theme_file = RandomFileW(theme_mask);
+		free(theme_mask);
+		BGReadIniFile(theme_file);
+		free(theme_file);
 	}
 }
 
@@ -4066,7 +4071,7 @@ static void ResetControls(HWND hWnd, ThemeEditorData *dlg_data)
 	SetDlgItemTextA(hWnd, IDC_BGIMG_EDIT, BGDest.file);
 	SetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS4, BGDest.color);
 	{
-		int count = SendDlgItemMessageA(hWnd, IDC_COMBO1, CB_GETCOUNT, 0, 0);
+		LRESULT count = SendDlgItemMessageA(hWnd, IDC_COMBO1, CB_GETCOUNT, 0, 0);
 		int sel = 0;
 		int i;
 		for (i = 0; i < count; i++) {
@@ -4086,6 +4091,33 @@ static void ResetControls(HWND hWnd, ThemeEditorData *dlg_data)
 	SendDlgItemMessage(hWnd, IDC_MIXED_THEME_FILE2, BM_SETCHECK, BGSrc2.alpha != 0, 0);
 	SetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS2, BGSrc2.alpha, FALSE);
 	SetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS, BGSrc2.color);
+}
+
+static void ReadFromDialog(HWND hWnd)
+{
+	LRESULT checked;
+	LRESULT index;
+	checked = SendDlgItemMessageA(hWnd, IDC_BGIMG_CHECK, BM_GETCHECK, 0, 0);
+	BGDest.type = checked & BST_CHECKED ? BG_PICTURE : BG_COLOR;
+	GetDlgItemTextA(hWnd, IDC_BGIMG_EDIT, BGDest.file, sizeof(BGDest.file));
+	BGDest.color = GetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS4);
+	index = SendDlgItemMessage(hWnd, IDC_COMBO1, CB_GETCURSEL, 0, 0);
+	BGDest.pattern = (BG_PATTERN)SendDlgItemMessage(hWnd, IDC_COMBO1, CB_GETITEMDATA, index, 0);
+
+	checked = SendDlgItemMessageA(hWnd, IDC_MIXED_THEME_FILE, BM_GETCHECK, 0, 0);
+	if (checked & BST_CHECKED) {
+		BGSrc1.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS3, NULL, FALSE);
+	} else {
+		BGSrc1.alpha = 0;
+	}
+
+	checked = SendDlgItemMessageA(hWnd, IDC_MIXED_THEME_FILE2, BM_GETCHECK, 0, 0);
+	if (checked & BST_CHECKED) {
+		BGSrc2.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS, NULL, FALSE);
+	} else {
+		BGSrc2.alpha = 0;
+	}
+	BGSrc2.color = GetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS);
 }
 
 static INT_PTR CALLBACK Proc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -4129,7 +4161,7 @@ static INT_PTR CALLBACK Proc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 				);
 
 			for (i = 0;; i++) {
-				int index;
+				LRESULT index;
 				const BG_PATTERN_ST *st = GetBGPatternList(i);
 				if (st == NULL) {
 					break;
@@ -4161,7 +4193,7 @@ static INT_PTR CALLBACK Proc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 		case WM_COMMAND: {
 			switch (wp) {
 			case IDC_BUTTON1 | (BN_CLICKED << 16): {
-				// 再読み込み
+				// テーマファイル読み込み
 				wchar_t *theme_file;
 				hGetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, &theme_file);
 				free(ts->EtermLookfeel.BGThemeFileW);
@@ -4199,35 +4231,15 @@ static INT_PTR CALLBACK Proc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 				break;
 			}
 			case IDC_BUTTON3 | (BN_CLICKED << 16): {
-				// コントロールから読み出し
+				// テーマファイル書き出し
 				wchar_t *theme_file_in;
 				wchar_t theme_file[MAX_PATH];
 				OPENFILENAMEW ofn = {0};
-				{
-					LRESULT checked;
-					int index;
-					checked = SendDlgItemMessageA(hWnd, IDC_BGIMG_CHECK, BM_GETCHECK, 0, 0);
-					BGDest.type = checked & BST_CHECKED ? BG_PICTURE : BG_COLOR;
-					GetDlgItemTextA(hWnd, IDC_BGIMG_EDIT, BGDest.file, sizeof(BGDest.file));
-					BGDest.color = GetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS4);
-					index = SendDlgItemMessage(hWnd, IDC_COMBO1, CB_GETCURSEL, 0, 0);
-					BGDest.pattern = (BG_PATTERN)SendDlgItemMessage(hWnd, IDC_COMBO1, CB_GETITEMDATA, index, 0);
 
-					checked = SendDlgItemMessageA(hWnd, IDC_MIXED_THEME_FILE, BM_GETCHECK, 0, 0);
-					if (checked & BST_CHECKED) {
-						BGSrc1.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS3, NULL, FALSE);
-					} else {
-						BGSrc1.alpha = 0;
-					}
-
-					checked = SendDlgItemMessageA(hWnd, IDC_MIXED_THEME_FILE2, BM_GETCHECK, 0, 0);
-					if (checked & BST_CHECKED) {
-						BGSrc2.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS2, NULL, FALSE);
-					} else {
-						BGSrc2.alpha = 0;
-					}
-					BGSrc2.color = GetDlgItemTextColor(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS);
-				}
+				// コントロールから読み出し
+				ReadFromDialog(hWnd);
+				BGSetupPrimary(TRUE);
+				InvalidateRect(HVTWin, NULL, FALSE);
 
 				hGetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, &theme_file_in);
 				wcscpy_s(theme_file, _countof(theme_file), theme_file_in);
@@ -4246,7 +4258,24 @@ static INT_PTR CALLBACK Proc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
 				if (GetSaveFileNameW(&ofn)) {
 					BGWriteIniFile(theme_file);
+					SetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, theme_file);
+					free(ts->EtermLookfeel.BGThemeFileW);
+					ts->EtermLookfeel.BGThemeFileW = _wcsdup(theme_file);
+				} else {
+					// 書き出しキャンセル/失敗
+					SetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, NULL);
 				}
+				break;
+			}
+			case IDC_BUTTON4 | (BN_CLICKED << 16): {
+				// 設定
+				ReadFromDialog(hWnd);
+//				BGLoadThemeFile(ts);
+				BGSetupPrimary(TRUE);
+				InvalidateRect(HVTWin, NULL, FALSE);
+				SetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, NULL);
+				free(ts->EtermLookfeel.BGThemeFileW);
+				ts->EtermLookfeel.BGThemeFileW = NULL;
 				break;
 			}
 			default:

@@ -38,7 +38,8 @@ extern "C" {
 /* prototypes */
 //<!--by AKASI
 void BGInitialize(BOOL initialize_once);
-void BGSetupPrimary(BOOL);
+void BGLoadThemeFile(TTTSet *pts);
+void BGSetupPrimary(BOOL forceSetup);
 void BGWriteThemeFile(const wchar_t *theme_file);
 
 void BGExchangeColor(void);

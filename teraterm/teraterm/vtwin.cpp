@@ -4222,7 +4222,10 @@ void CVTWindow::OnExternalSetup()
 	INT_PTR ret = CAddSetting.DoModal();
 	if (ret == IDOK) {
 #ifdef ALPHABLEND_TYPE2
-		BGInitialize(FALSE);
+		if (ts.EtermLookfeel.BGThemeFileW != NULL && ts.EtermLookfeel.BGThemeFileW[0] != 0) {
+			// テーマファイルを読み込む
+			BGLoadThemeFile(&ts);
+		}
 		BGSetupPrimary(TRUE);
 #else
 		DispApplyANSIColor();

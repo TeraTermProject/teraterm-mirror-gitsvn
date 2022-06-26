@@ -252,6 +252,7 @@
 #define IDC_BUTTON1                     2612
 #define IDC_BUTTON2                     2613
 #define IDC_BUTTON3                     2614
+#define IDC_BUTTON4                     2615
 #define IDC_COMBO1                      2616
 #define IDC_STATIC_HELP                 2617
 #define ID_ACC_SENDBREAK                50001

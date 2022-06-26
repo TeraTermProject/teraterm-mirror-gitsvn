@@ -4222,7 +4222,7 @@ static INT_PTR CALLBACK Proc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
 					checked = SendDlgItemMessageA(hWnd, IDC_MIXED_THEME_FILE2, BM_GETCHECK, 0, 0);
 					if (checked & BST_CHECKED) {
-						BGSrc2.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS, NULL, FALSE);
+						BGSrc2.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS2, NULL, FALSE);
 					} else {
 						BGSrc2.alpha = 0;
 					}

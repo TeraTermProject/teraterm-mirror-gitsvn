@@ -4113,7 +4113,7 @@ static void ReadFromDialog(HWND hWnd)
 
 	checked = SendDlgItemMessageA(hWnd, IDC_MIXED_THEME_FILE2, BM_GETCHECK, 0, 0);
 	if (checked & BST_CHECKED) {
-		BGSrc2.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS, NULL, FALSE);
+		BGSrc2.alpha = GetDlgItemInt(hWnd, IDC_EDIT_BGIMG_BRIGHTNESS2, NULL, FALSE);
 	} else {
 		BGSrc2.alpha = 0;
 	}
@@ -4140,14 +4140,14 @@ static INT_PTR CALLBACK Proc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 							L"いま表示されているテーマファイル名"
 				);
 			TipWin2SetTextW(dlg_data->tipwin, IDC_BUTTON1,
-							L"target file を再読み込みする\n"
-							L"将来は、任意のテーマファイルを読み込めるようにする"
+							L"テーマフィアルを読み込む\n"
 				);
 			TipWin2SetTextW(dlg_data->tipwin, IDC_BUTTON3,
-							L"現在のダイアログの状態をテーマファイルに書き込む\n"
-							L"書き込んだイファイル(テーマファイル)を\n"
-							L"「表示タブ」で読み込み指定して、「ok」押すと反映される\n"
-							L"このページの設定はこれで書き出さないと失われる\n"
+							L"現在のダイアログの状態を設定してテーマファイルに書き込む\n"
+				);
+			TipWin2SetTextW(dlg_data->tipwin, IDC_BUTTON4,
+							L"現在のダイアログの状態を設定する\n"
+							L"このページの設定は書き出さないと失われる\n"
 				);
 			SetDlgItemTextW(hWnd, IDC_STATIC_HELP,
 							L"次の順で合成されて、背景に表示される\n"
@@ -4194,14 +4194,37 @@ static INT_PTR CALLBACK Proc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 			switch (wp) {
 			case IDC_BUTTON1 | (BN_CLICKED << 16): {
 				// テーマファイル読み込み
-				wchar_t *theme_file;
-				hGetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, &theme_file);
-				free(ts->EtermLookfeel.BGThemeFileW);
-				ts->EtermLookfeel.BGThemeFileW = theme_file;
+				OPENFILENAMEW ofn = {0};
+				wchar_t theme_file[MAX_PATH];
+				wchar_t *theme_file_in;
 
-				BGReadIniFile(ts->EtermLookfeel.BGThemeFileW);
-				ResetControls(hWnd, dlg_data);
-				BGSetupPrimary(TRUE);
+				hGetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, &theme_file_in);
+				wcscpy_s(theme_file, _countof(theme_file), theme_file_in);
+				free(theme_file_in);
+				theme_file_in = NULL;
+
+				ofn.lStructSize = get_OPENFILENAME_SIZEW();
+				ofn.hwndOwner   = hWnd;
+				ofn.lpstrFile   = theme_file;
+				ofn.nMaxFile    = _countof(theme_file);
+				ofn.nFilterIndex = 1;
+				ofn.hInstance = hInst;
+				ofn.lpstrDefExt = L"ini";
+				ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+				ofn.lpstrTitle = L"select theme file";
+
+				if (GetOpenFileNameW(&ofn)) {
+					free(ts->EtermLookfeel.BGThemeFileW);
+					ts->EtermLookfeel.BGThemeFileW = _wcsdup(theme_file);
+					SetDlgItemTextW(hWnd, IDC_BGIMG_EDIT2, theme_file);
+
+					BGReadIniFile(ts->EtermLookfeel.BGThemeFileW);
+					BGSetupPrimary(TRUE);
+					InvalidateRect(HVTWin, NULL, FALSE);
+
+					ResetControls(hWnd, dlg_data);
+				}
+
 				break;
 			}
 			case IDC_BGIMG_BUTTON | (BN_CLICKED << 16): {

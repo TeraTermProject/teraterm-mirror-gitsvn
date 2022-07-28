@@ -14,14 +14,3 @@
 Tera Term カラーテーマプラグイン を参考にしました。
 - https://osdn.net/users/doda/pf/TTXColorTheme/
 
-## add...
-
-## Windows 10 Console
-
-- https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-
-## Dracula
-
-- Dracula
-  - カラーテーマ Dracula の追加
-  - https://osdn.net/projects/ttssh2/ticket/39728

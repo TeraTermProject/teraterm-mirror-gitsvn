@@ -207,6 +207,17 @@ source_group(
   REGULAR_EXPRESSION
   "..\/ttpfile\/")
 
+target_sources(
+  ${PACKAGE_NAME}
+  PRIVATE
+  ../ttpset/ttset.c
+)
+
+source_group(
+  "ttpset"
+  REGULAR_EXPRESSION
+  "..\/ttpset\/")
+
 if(SUPPORT_OLD_WINDOWS)
   if(MSVC)
     if(${CMAKE_VERSION} VERSION_LESS "3.12.0")
@@ -301,7 +312,7 @@ target_link_libraries(
   PRIVATE
   common_static
   ttpcmn
-  ttpset
+#  ttpset
   ttptek
   cyglib
   ${ONIGURUMA_LIB}

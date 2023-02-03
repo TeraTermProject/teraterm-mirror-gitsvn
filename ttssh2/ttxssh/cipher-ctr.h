@@ -28,8 +28,10 @@
 
 #pragma once
 
+#if !defined(LIBRESSL_VERSION_NUMBER) || LIBRESSL_VERSION_NUMBER <= 0x3040300fL
 const EVP_CIPHER *evp_aes_128_ctr(void);
 const EVP_CIPHER *evp_des3_ctr(void);
 const EVP_CIPHER *evp_bf_ctr(void);
 const EVP_CIPHER *evp_cast5_ctr(void);
 const EVP_CIPHER *evp_camellia_128_ctr(void);
+#endif

@@ -129,6 +129,7 @@ ssh_aes_ctr_cleanup(EVP_CIPHER_CTX *ctx)
 	return (1);
 }
 
+#if !defined(LIBRESSL_VERSION_NUMBER) || LIBRESSL_VERSION_NUMBER <= 0x3040300fL
 const EVP_CIPHER *
 evp_aes_128_ctr(void)
 {
@@ -164,6 +165,7 @@ evp_aes_128_ctr(void)
 	return (&aes_ctr);
 #endif
 }
+#endif
 
 //============================================================================
 // Triple-DES
@@ -225,6 +227,7 @@ ssh_des3_ctr_cleanup(EVP_CIPHER_CTX *ctx)
 	return (1);
 }
 
+#if !defined(LIBRESSL_VERSION_NUMBER) || LIBRESSL_VERSION_NUMBER <= 0x3040300fL
 const EVP_CIPHER *
 evp_des3_ctr(void)
 {
@@ -260,6 +263,7 @@ evp_des3_ctr(void)
 	return (&des3_ctr);
 #endif
 }
+#endif
 
 //============================================================================
 // Blowfish
@@ -336,6 +340,7 @@ ssh_bf_ctr_cleanup(EVP_CIPHER_CTX *ctx)
 	return (1);
 }
 
+#if !defined(LIBRESSL_VERSION_NUMBER) || LIBRESSL_VERSION_NUMBER <= 0x3040300fL
 const EVP_CIPHER *
 evp_bf_ctr(void)
 {
@@ -371,6 +376,7 @@ evp_bf_ctr(void)
 	return (&blowfish_ctr);
 #endif
 }
+#endif
 
 //============================================================================
 // CAST-128
@@ -447,6 +453,7 @@ ssh_cast5_ctr_cleanup(EVP_CIPHER_CTX *ctx)
 	return (1);
 }
 
+#if !defined(LIBRESSL_VERSION_NUMBER) || LIBRESSL_VERSION_NUMBER <= 0x3040300fL
 const EVP_CIPHER *
 evp_cast5_ctr(void)
 {
@@ -482,6 +489,7 @@ evp_cast5_ctr(void)
 	return (&cast5_ctr);
 #endif
 }
+#endif
 
 //============================================================================
 // Camellia
@@ -538,6 +546,7 @@ ssh_camellia_ctr_cleanup(EVP_CIPHER_CTX *ctx)
 	return (1);
 }
 
+#if !defined(LIBRESSL_VERSION_NUMBER) || LIBRESSL_VERSION_NUMBER <= 0x3040300fL
 const EVP_CIPHER *
 evp_camellia_128_ctr(void)
 {
@@ -573,3 +582,4 @@ evp_camellia_128_ctr(void)
 	return (&camellia_ctr);
 #endif
 }
+#endif

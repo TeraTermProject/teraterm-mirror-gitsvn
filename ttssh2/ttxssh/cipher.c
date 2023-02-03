@@ -37,8 +37,14 @@
 
 #include "codeconv.h"
 
+#if !defined(LIBRESSL_VERSION_NUMBER) || LIBRESSL_VERSION_NUMBER <= 0x3040300fL
+#define CTR_ENABLE	1
+#endif
+
+#if CTR_ENABLE
 #include "cipher-3des1.h"
 #include "cipher-ctr.h"
+#endif
 
 static const struct ssh2cipher ssh2_ciphers[] = {
 	{SSH2_CIPHER_3DES_CBC,        "3des-cbc",         8, 24,    0, 0, 0, EVP_des_ede3_cbc},     // RFC4253
@@ -53,9 +59,11 @@ static const struct ssh2cipher ssh2_ciphers[] = {
 	{SSH2_CIPHER_ARCFOUR128,      "arcfour128",       8, 16, 1536, 0, 0, EVP_rc4},              // RFC4345
 	{SSH2_CIPHER_ARCFOUR256,      "arcfour256",       8, 32, 1536, 0, 0, EVP_rc4},              // RFC4345
 	{SSH2_CIPHER_CAST128_CBC,     "cast128-cbc",      8, 16,    0, 0, 0, EVP_cast5_cbc},        // RFC4253
+#if CTR_ENABLE
 	{SSH2_CIPHER_3DES_CTR,        "3des-ctr",         8, 24,    0, 0, 0, evp_des3_ctr},         // RFC4344
 	{SSH2_CIPHER_BLOWFISH_CTR,    "blowfish-ctr",     8, 32,    0, 0, 0, evp_bf_ctr},           // RFC4344
 	{SSH2_CIPHER_CAST128_CTR,     "cast128-ctr",      8, 16,    0, 0, 0, evp_cast5_ctr},        // RFC4344
+#endif
 	{SSH2_CIPHER_CAMELLIA128_CBC, "camellia128-cbc", 16, 16,    0, 0, 0, EVP_camellia_128_cbc}, // draft-kanno-secsh-camellia-02
 	{SSH2_CIPHER_CAMELLIA192_CBC, "camellia192-cbc", 16, 24,    0, 0, 0, EVP_camellia_192_cbc}, // draft-kanno-secsh-camellia-02
 	{SSH2_CIPHER_CAMELLIA256_CBC, "camellia256-cbc", 16, 32,    0, 0, 0, EVP_camellia_256_cbc}, // draft-kanno-secsh-camellia-02
@@ -64,9 +72,11 @@ static const struct ssh2cipher ssh2_ciphers[] = {
 	{SSH2_CIPHER_CAMELLIA192_CTR, "camellia192-ctr", 16, 24,    0, 0, 0, EVP_camellia_192_ctr}, // draft-kanno-secsh-camellia-02
 	{SSH2_CIPHER_CAMELLIA256_CTR, "camellia256-ctr", 16, 32,    0, 0, 0, EVP_camellia_256_ctr}, // draft-kanno-secsh-camellia-02
 #else
+#if CTR_ENABLE
 	{SSH2_CIPHER_CAMELLIA128_CTR, "camellia128-ctr", 16, 16,    0, 0, 0, evp_camellia_128_ctr}, // draft-kanno-secsh-camellia-02
 	{SSH2_CIPHER_CAMELLIA192_CTR, "camellia192-ctr", 16, 24,    0, 0, 0, evp_camellia_128_ctr}, // draft-kanno-secsh-camellia-02
 	{SSH2_CIPHER_CAMELLIA256_CTR, "camellia256-ctr", 16, 32,    0, 0, 0, evp_camellia_128_ctr}, // draft-kanno-secsh-camellia-02
+#endif
 #endif
 #ifdef WITH_CAMELLIA_PRIVATE
 	{SSH2_CIPHER_CAMELLIA128_CBC, "camellia128-cbc@openssh.org", 16, 16, 0,  0,  0, EVP_camellia_128_cbc},
@@ -80,7 +90,9 @@ static const struct ssh2cipher ssh2_ciphers[] = {
 	{SSH2_CIPHER_AES256_GCM,      "aes256-gcm@openssh.com",      16, 32, 0, 12, 16, EVP_aes_256_gcm}, // not RFC5647, PROTOCOL of OpenSSH
 	{SSH2_CIPHER_CHACHAPOLY,      "chacha20-poly1305@openssh.com",  8, 64, 0, 0, 16, EVP_enc_null},
 	{SSH_CIPHER_NONE,             "none",             8,  0,    0, 0, 0, EVP_enc_null},         // for no passphrase key file
+#if CTR_ENABLE
 	{SSH_CIPHER_3DES,             "3des",             8, 16,    0, 0, 0, evp_ssh1_3des},        // for RSA1 key file
+#endif
 };
 
 

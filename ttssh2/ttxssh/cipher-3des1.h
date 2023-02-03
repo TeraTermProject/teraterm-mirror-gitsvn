@@ -28,4 +28,6 @@
 
 #pragma once
 
+#if !defined(LIBRESSL_VERSION_NUMBER) || LIBRESSL_VERSION_NUMBER <= 0x3040300fL
 const EVP_CIPHER* evp_ssh1_3des(void);
+#endif

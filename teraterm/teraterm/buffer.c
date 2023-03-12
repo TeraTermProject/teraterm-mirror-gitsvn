@@ -1023,7 +1023,11 @@ void BuffEraseCharsInLine(int XStart, int Count)
 		}
 	}
 
+#if 0
 	DispEraseCharsInLine(XStart, Count, &CurCharAttr);
+#else
+	BuffDrawLineI(-1, -1, CursorY + PageStart, XStart, XStart + Count);
+#endif
 }
 
 void BuffDeleteLines(int Count, int YEnd)
